@@ -56,7 +56,7 @@ const Gate = (() => {
           <h1 class="gate-title">Train smarter.<br />Track every set.</h1>
           <p class="gate-sub">${cloud()
             ? "Sign in and your workouts follow you to any device."
-            : "The server is not running, so this session stays on the device."}</p>
+            : "Every set you log is saved right here on this device."}</p>
         </div>
         ${cloud() ? form(mode) : offlineNote()}
       </div>`;
@@ -120,9 +120,7 @@ const Gate = (() => {
   function offlineNote() {
     return `
       <div class="gate-offline">
-        <p class="detail-summary">Accounts need the server running. Start it with
-        <code>node backend/server.js</code> and reload, or carry on without one.</p>
-        <button class="btn btn--primary btn--block btn--lg" type="button" data-gate-skip>Keep training on this device</button>
+        <button class="btn btn--primary btn--block btn--lg" type="button" data-gate-skip>Start training</button>
       </div>`;
   }
 
