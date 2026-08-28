@@ -1,0 +1,70 @@
+# reps
+
+An interactive workout guide and tracker. Browse an exercise library, turn any
+movement into a configured workout, run it set by set with a rest timer, and
+watch the numbers move over time.
+
+Static site. No build step, no dependencies, no framework.
+
+## Running it
+
+Any static server works:
+
+    python3 -m http.server 4174
+
+Then open http://localhost:4174
+
+Opening `index.html` directly works too — there are no image files to load and
+nothing is fetched at runtime.
+
+## Structure
+
+    index.html              app shell, nav and script order
+    css/style.css           design tokens and all styling
+    js/
+      data/exercises.js     36 exercises: coaching notes, muscles, defaults
+      data/templates.js     six starting workouts
+      store.js              one localStorage document plus every mutation
+      sound.js              synthesized cues for sets, rest and records
+      icons.js              icon set and the muscle map renderer
+      figures.js            pose system that draws every exercise
+      ui.js                 steppers, sheets, toasts, formatting
+      library.js            library view, filtering, exercise detail sheet
+      builder.js            workout builder, reordering, saved workouts
+      session.js            workout mode, rest timer, completion summary
+      progress.js           history log and per-exercise progress
+
+## Notes
+
+Every illustration is drawn in code, so there are no image files anywhere.
+`figures.js` is a small pose system: a set of joint coordinates per exercise
+plus equipment primitives (barbell, dumbbell, bench, rack, cable stack), drawn
+as round-capped strokes on a 512 square. Each pose is auto-fitted to its tile
+from its own bounding box, so all 36 sit at the same visual weight.
+
+The detail view adds a second diagram, a **muscle map**, where the worked
+regions light up — primary solid, secondary faded — with front and back views
+built from the same part list.
+
+All state lives in a single localStorage key (`reps.state.v1`) behind
+`store.js`. Views never touch storage directly, so swapping in a real backend
+means rewriting `load` and `persist` and leaving everything else alone.
+
+The rest timer works off timestamps rather than a counter, so backgrounding the
+tab does not drift it. `visibilitychange` restarts the animation loop the
+moment you come back.
+
+Cache busting is manual: `index.html` links CSS and JS with a `?v=` query. Bump
+it when you edit either, or a browser may pair a new file with a stale one.
+
+Sound is off-by-default-safe: no audio context exists until the first real
+interaction, and the toggle in the sidebar persists the choice.
+
+## Credit
+
+The exercise-library concept was inspired by
+[Bryl Lim's Workout Guide](https://github.com/bryllim/workout-guide), which
+publishes 302 exercise illustrations as an npm package. None of those assets
+are used here — the figures in this project are drawn from scratch in
+`figures.js` so the app stays dependency-free. Code, design, data and the
+tracking half of the app are original.

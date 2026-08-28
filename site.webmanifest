@@ -1,0 +1,10 @@
+{
+  "name": "Reps — Workout Guide & Tracker",
+  "short_name": "Reps",
+  "theme_color": "#0b0b0d",
+  "background_color": "#f7f7f5",
+  "display": "standalone",
+  "start_url": ".",
+  "scope": ".",
+  "description": "Browse exercises, build a workout, run it set by set and track every personal record."
+}

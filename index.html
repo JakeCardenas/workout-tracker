@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Reps — Workout Guide &amp; Tracker</title>
+    <meta
+      name="description"
+      content="An exercise library, workout planner and set-by-set tracker in one. Browse 36 movements, build a workout, run it with a rest timer and track every personal record."
+    />
+    <link rel="manifest" href="./site.webmanifest" />
+    <meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content="Reps — Workout Guide &amp; Tracker" />
+    <meta property="og:description" content="Discover, configure, build, start, complete, track." />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@300..600&display=swap"
+      rel="stylesheet"
+    />
+    <link href="./css/style.css?v=6" rel="stylesheet" />
+  </head>
+  <body>
+    <a class="skip-link" href="#view">Skip to content</a>
+
+    <header class="topbar">
+      <button class="icon-btn" id="nav-toggle" type="button" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+      <a class="topbar-logo mono" href="#/">reps<span class="dot">.</span></a>
+      <a class="icon-btn nav-fav" href="#/favorites" data-nav="favorites" aria-label="Favorites">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8L3.5 9.7l5.9-.9z" />
+        </svg>
+        <span class="badge mono" data-fav-badge hidden>0</span>
+      </a>
+    </header>
+
+    <div class="shell">
+      <div class="nav-scrim" id="nav-scrim"></div>
+
+      <aside class="sidebar">
+        <a class="side-logo mono" href="#/">reps<span class="dot">.</span></a>
+        <p class="side-tag mono">Train smarter.<br />Track every set.</p>
+
+        <nav class="side-nav mono" aria-label="Sections">
+          <a class="nav-link" href="#/" data-nav="home"><span class="nav-ico"></span>Home</a>
+          <a class="nav-link" href="#/library" data-nav="library"><span class="nav-ico"></span>Library</a>
+          <a class="nav-link" href="#/favorites" data-nav="favorites"><span class="nav-ico"></span>Favorites<span class="badge mono" data-fav-badge hidden>0</span></a>
+          <a class="nav-link" href="#/build" data-nav="build"><span class="nav-ico"></span>Build<span class="badge mono" data-build-badge hidden>0</span></a>
+          <a class="nav-link" href="#/history" data-nav="history"><span class="nav-ico"></span>History</a>
+          <a class="nav-link" href="#/progress" data-nav="progress"><span class="nav-ico"></span>Progress</a>
+        </nav>
+
+        <div class="side-foot">
+          <div class="control-pill">
+            <div class="theme-switch" role="group" aria-label="Theme">
+              <button class="ctl-btn" type="button" data-theme-btn="system" title="System" aria-label="Match system theme">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2.5" y="4" width="19" height="13" rx="2" /><path d="M8 21h8M12 17v4" />
+                </svg>
+              </button>
+              <button class="ctl-btn" type="button" data-theme-btn="light" title="Light" aria-label="Light theme">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2M12 19.5v2M21.5 12h-2M4.5 12h-2M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4M18.7 18.7l-1.4-1.4M6.7 6.7L5.3 5.3" />
+                </svg>
+              </button>
+              <button class="ctl-btn" type="button" data-theme-btn="dark" title="Dark" aria-label="Dark theme">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z" />
+                </svg>
+              </button>
+            </div>
+            <button class="ctl-btn ctl-btn--sound" type="button" data-sound-toggle aria-label="Toggle sound"></button>
+          </div>
+          <p class="side-note mono">Saved on this device</p>
+        </div>
+      </aside>
+
+      <main class="content" id="view"></main>
+    </div>
+
+    <nav class="tabbar mono" aria-label="Sections">
+      <a class="tab" href="#/" data-nav="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6.5 8 6.5M6.5 9.5V20h11V9.5" /></svg>
+        Home
+      </a>
+      <a class="tab" href="#/library" data-nav="library">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="4" width="7" height="16" rx="1.5" /><rect x="13.5" y="4" width="7" height="7" rx="1.5" /><rect x="13.5" y="13" width="7" height="7" rx="1.5" /></svg>
+        Library
+      </a>
+      <a class="tab" href="#/build" data-nav="build">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h10M4 12h16M4 17h7" /><circle cx="18" cy="7" r="2" /><circle cx="14" cy="17" r="2" /></svg>
+        Build
+        <span class="badge mono" data-build-badge hidden>0</span>
+      </a>
+      <a class="tab" href="#/history" data-nav="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 108.5-8.5A8.4 8.4 0 005.6 6.6" /><path d="M3.5 3.5v3.5H7" /><path d="M12 8v4.3l3 1.7" /></svg>
+        History
+      </a>
+      <a class="tab" href="#/progress" data-nav="progress">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16" /><path d="M8 15l3.5-4 3 2.5L20 7" /></svg>
+        Progress
+      </a>
+    </nav>
+
+    <div class="sheet" id="sheet"></div>
+    <div class="toast" id="toast"></div>
+    <div class="session" id="session"></div>
+
+    <script src="./js/data/exercises.js?v=6"></script>
+    <script src="./js/data/templates.js?v=6"></script>
+    <script src="./js/sound.js?v=6"></script>
+    <script src="./js/icons.js?v=6"></script>
+    <script src="./js/figures.js?v=6"></script>
+    <script src="./js/store.js?v=6"></script>
+    <script src="./js/ui.js?v=6"></script>
+    <script src="./js/library.js?v=6"></script>
+    <script src="./js/builder.js?v=6"></script>
+    <script src="./js/session.js?v=6"></script>
+    <script src="./js/progress.js?v=6"></script>
+    <script src="./js/app.js?v=6"></script>
+  </body>
+</html>
