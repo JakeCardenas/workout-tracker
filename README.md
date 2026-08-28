@@ -17,9 +17,25 @@ Then open http://localhost:4174
 Opening `index.html` directly works too — there are no image files to load and
 nothing is fetched at runtime.
 
+## Installing it
+
+It is a proper PWA, so on a phone you can open it in the browser and use
+Add to Home Screen. It launches standalone, keeps its own icon, and a service
+worker precaches the shell so it runs with no signal at all — which suits a
+basement gym.
+
+The icons are generated, not drawn by hand:
+
+    python3 tools/make-icons.py
+
+Bump `CACHE` in `sw.js` whenever you bump the `?v=` numbers in `index.html`,
+or a returning visitor keeps the old shell.
+
 ## Structure
 
     index.html              app shell, nav and script order
+    sw.js                   offline precache
+    tools/make-icons.py     writes the PNG icon set with no dependencies
     css/style.css           design tokens and all styling
     js/
       data/exercises.js     36 exercises: coaching notes, muscles, defaults

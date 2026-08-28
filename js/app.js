@@ -404,6 +404,11 @@ const App = (() => {
     wireSounds();
     paint(false);
     document.body.classList.add("is-ready");
+
+    // needs http(s); opening index.html straight off the disk just skips it
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
   }
 
   return { boot, paint, repaint, syncSoundButtons, syncUnitButtons, syncBadges };
