@@ -1,5 +1,6 @@
 const Store = (() => {
-  const KEY = "reps.state.v1";
+  const BASE = "reps.state.v1";
+  let KEY = BASE;
 
   const blank = () => ({
     v: 1,
@@ -298,6 +299,12 @@ const Store = (() => {
     commit("settings");
   }
 
+  function mount(namespace) {
+    KEY = namespace ? `${BASE}::${namespace}` : BASE;
+    state = load();
+    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent");
+  }
+
   function replace(next) {
     state = Object.assign(blank(), next, {
       settings: Object.assign(blank().settings, next.settings || {}),
@@ -351,6 +358,7 @@ const Store = (() => {
     lastPerformance,
     historyFor,
     setSetting,
+    mount,
     replace,
     reset,
   };

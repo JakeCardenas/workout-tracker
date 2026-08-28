@@ -1,4 +1,4 @@
-const Session = (() => {
+const Workout = (() => {
   const RING = 2 * Math.PI * 54;
   let live = null;
   let raf = null;

@@ -1,0 +1,9 @@
+{
+  "name": "reps-backend",
+  "private": true,
+  "type": "module",
+  "description": "Node built-ins only. There is nothing to install.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

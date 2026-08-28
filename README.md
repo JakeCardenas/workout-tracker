@@ -8,37 +8,36 @@ Static site. No build step, no dependencies, no framework.
 
 ## Running it
 
-Any static server works:
+    node backend/server.js
 
-    python3 -m http.server 4174
+Then open http://localhost:4174. That one command serves the site and the API
+together — no npm install, no build step, nothing to configure.
 
-Then open http://localhost:4174
+You can still serve the files with anything static (`python3 -m http.server
+4174`) or open `index.html` off the disk. Accounts need the backend, so without
+it the app offers to carry on without one and keeps everything on the device.
 
-Opening `index.html` directly works too — there are no image files to load and
-nothing is fetched at runtime.
+## Accounts
 
-## Accounts and sync
+The first thing you see is a sign in / create account screen, or a note that
+the server is not running with the option to carry on without an account.
 
-Optional, and off until you set it up. Without it the app behaves exactly as it
-always has — everything on the device, no network.
+Passwords are hashed with `scrypt` and a per-account salt, compared with
+`timingSafeEqual`. Signing in with an address that does not exist still runs the
+hash, so response timing gives nothing away, and both failures say the same
+thing. Ten bad attempts on an address buys a fifteen minute pause.
 
-1. Create a free project at supabase.com
-2. Run `db/schema.sql` in the SQL editor
-3. Settings → API, copy the Project URL and the `anon` key into `js/config.js`
+The session is a random token in an HttpOnly, SameSite=Lax cookie, and only its
+SHA-256 is stored. Page scripts cannot read it, so an XSS bug cannot steal a
+session, and a copied database still contains no usable tokens.
 
-Then Sign in appears in the sidebar. Registration and login go straight to
-Supabase over HTTPS; passwords never touch this code beyond the input event.
-State pushes up about a second after any change and pulls down when you sign in
-on another device.
+Your workouts are written to SQLite about a second after any change and read
+back when you sign in. Clearing the browser entirely and reloading gets
+everything back from the server.
 
 Signing in on a device that already has workouts does not overwrite them
 silently — the local copy is stashed first and the toast offers to keep it
-instead, which then becomes the version in your account.
-
-The `anon` key belongs in client code; it only names the project. Every policy
-in the schema compares `auth.uid()` to `user_id`, so the key on its own reads
-nothing. Session tokens live in localStorage, which is the usual trade-off for
-a site with no server of its own.
+instead.
 
 ## Installing it
 
@@ -56,29 +55,36 @@ or a returning visitor keeps the old shell.
 
 ## Structure
 
-    index.html              app shell, nav and script order
-    sw.js                   offline precache
-    tools/make-icons.py     writes the PNG icon set with no dependencies
-    db/schema.sql           one table, four row level security policies
-    css/style.css           design tokens and all styling
-    js/
-      data/exercises.js     36 exercises: coaching notes, muscles, defaults
-      data/templates.js     six starting workouts
-      store.js              one localStorage document plus every mutation
-      sound.js              synthesized cues for sets, rest and records
-      config.js             Supabase URL and anon key, blank by default
-      api.js                auth and REST over plain fetch, no SDK
-      auth.js               sign in, sign up, and background sync
-      units.js              kg / lb conversion, one canonical unit
-      plates.js             bar loading, warm-up ramps, 1RM estimate
-      backup.js             export and restore the whole state as JSON
-      icons.js              icon set and the muscle map renderer
-      figures.js            pose system that draws every exercise
-      ui.js                 steppers, sheets, toasts, formatting
-      library.js            library view, filtering, exercise detail sheet
-      builder.js            workout builder, reordering, saved workouts
-      session.js            workout mode, rest timer, completion summary
-      progress.js           history log and per-exercise progress
+    frontend/                 everything the browser loads
+      index.html              markup, and the script order
+      sw.js                   offline precache
+      site.webmanifest
+      css/style.css           design tokens and all styling
+      assets/icons/           generated app icons
+      js/
+        app.js                boot, router, home screen
+        data/                 exercises.js, templates.js
+        core/                 store.js, units.js, plates.js, backup.js
+        ui/                   ui.js, icons.js, figures.js, sound.js
+        account/              config.js, api.js, sync.js, gate.js
+        views/                library.js, builder.js, workout.js, progress.js
+
+    backend/                  node built-ins only, nothing to install
+      server.js               http, routing, static files, the API
+      auth.js                 scrypt hashing, sessions, rate limiting
+      db.js                   sqlite schema and queries
+      data/                   reps.db, created on first run
+
+    tools/make-icons.py       writes the icon set with no dependencies
+
+The split is by job, not by file type. `core` is logic, `ui` is the pieces that
+draw, `views` are the screens, `account` is everything to do with signing in.
+Nothing in `data` knows the rest of the app exists.
+
+Two names had to move out of each other's way: the browser's sync module is
+`Sync` in `account/sync.js`, because `backend/auth.js` already owns auth, and
+workout mode is `Workout` in `views/workout.js`, because a session now means a
+signed-in session.
 
 ## Notes
 

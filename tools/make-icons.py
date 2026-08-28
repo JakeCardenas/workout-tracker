@@ -58,6 +58,6 @@ def png(path, S, pad_ratio=0.20):
     return len(out)
 
 for size, pad in [(180, 0.09), (192, 0.09), (512, 0.09), (1024, 0.09), (256, 0.24)]:
-    name = "assets/icons/maskable-256.png" if size == 256 else f"assets/icons/icon-{size}.png"
+    name = "frontend/assets/icons/maskable-256.png" if size == 256 else f"frontend/assets/icons/icon-{size}.png"
     n = png(name, size, pad)
     print(f"{name}  {size}x{size}  {n/1024:.1f} KB")

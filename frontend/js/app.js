@@ -106,7 +106,7 @@ const HomeView = (() => {
     root.addEventListener("click", (e) => {
       if (e.target.closest("[data-start-draft]")) {
         const draft = Store.state.draft;
-        if (draft.items.length) return Session.start(draft);
+        if (draft.items.length) return Workout.start(draft);
         Toast.show("Build a workout first — pick a template to start fast");
         location.hash = "#/build";
         return;
@@ -114,7 +114,7 @@ const HomeView = (() => {
       const quick = e.target.closest("[data-quick]");
       if (quick) {
         Store.loadWorkout(quick.dataset.quick);
-        return Session.start(Store.state.draft);
+        return Workout.start(Store.state.draft);
       }
       const template = e.target.closest("[data-template]");
       if (template) {
@@ -273,17 +273,20 @@ const App = (() => {
   }
 
   function openAccountSheet() {
+    const who = Gate.current();
+    const synced = Api.reachable();
     Sheet.open({
       title: "Account",
       body: `
         <header class="detail-head">
           <div>
             <h2 class="detail-title">Signed in</h2>
-            <p class="detail-meta mono">${esc(Api.user.email)}</p>
+            <p class="detail-meta mono">${esc(who.name)}</p>
           </div>
         </header>
-        <p class="detail-summary">Every change is pushed to your account a moment after you make it,
-        and pulled back down when you sign in somewhere else. Sign out and this device keeps its own copy.</p>
+        <p class="detail-summary">${synced
+          ? "Every change is pushed to your account a moment after you make it, and pulled back down when you sign in on another device."
+          : "The server is not reachable, so changes are being kept on this device until it is."}</p>
         <div class="confirm-actions">
           <button class="btn" type="button" data-sign-out>Sign out</button>
           <button class="btn" type="button" data-close>Close</button>
@@ -291,7 +294,7 @@ const App = (() => {
       onMount(scope) {
         scope.querySelector("[data-sign-out]").addEventListener("click", () => {
           Sheet.close();
-          Auth.signOut();
+          Gate.signOut();
         });
       },
     });
@@ -373,7 +376,7 @@ const App = (() => {
 
       if (e.target.closest("[data-open-data]")) openDataSheet();
       if (e.target.closest("[data-open-account]")) {
-        Auth.signedIn() ? openAccountSheet() : Auth.openSheet("signin");
+        Gate.current() ? openAccountSheet() : Gate.open("signin");
       }
 
       const unitBtn = e.target.closest("[data-unit-toggle]");
@@ -433,8 +436,8 @@ const App = (() => {
     paint(false);
     document.body.classList.add("is-ready");
 
-    Auth.start();
-    Store.subscribe(() => Auth.schedulePush());
+    Store.subscribe(() => Sync.schedulePush());
+    Gate.start();
 
     // needs http(s); opening index.html straight off the disk just skips it
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

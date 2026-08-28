@@ -197,7 +197,7 @@ const BuildView = (() => {
         const id = card.dataset.workout;
         if (e.target.closest("[data-start-saved]")) {
           Store.loadWorkout(id);
-          return Session.start(Store.state.draft);
+          return Workout.start(Store.state.draft);
         }
         if (e.target.closest("[data-load]")) {
           Store.loadWorkout(id);
@@ -236,7 +236,7 @@ const BuildView = (() => {
         return Toast.show(`${t.name} loaded — edit anything you like`);
       }
 
-      if (e.target.closest("[data-start]")) return Session.start(Store.state.draft);
+      if (e.target.closest("[data-start]")) return Workout.start(Store.state.draft);
 
       if (e.target.closest("[data-save-workout]")) {
         const w = Store.saveDraft(nameInput.value);
