@@ -44,7 +44,6 @@ function openItemEditor(item, onSave) {
           weight: Stepper.read(config, "weight"),
           rest: +config.querySelector("[data-rest-picker]").dataset.value,
         });
-        Sound.play("tap");
         Sheet.close();
       });
     },
@@ -169,7 +168,6 @@ const BuildView = (() => {
         const move = e.target.closest("[data-move]");
         if (move) {
           Store.moveDraftItem(uid, +move.dataset.move);
-          Sound.play("tap");
           return App.repaint();
         }
         if (e.target.closest("[data-remove]")) {
@@ -203,12 +201,10 @@ const BuildView = (() => {
         }
         if (e.target.closest("[data-load]")) {
           Store.loadWorkout(id);
-          Sound.play("tap");
           return App.repaint();
         }
         if (e.target.closest("[data-duplicate]")) {
           const copy = Store.duplicateWorkout(id);
-          Sound.play("tap");
           App.repaint();
           return Toast.show(`Duplicated as "${copy.name}"`);
         }
@@ -298,7 +294,7 @@ const BuildView = (() => {
       items.sort((a, b) => order.indexOf(a.uid) - order.indexOf(b.uid));
       Store.setDraftName(Store.state.draft.name); // persists the new order
       dragged = null;
-      Sound.play("tap");
+      Sound.play("step");
       App.repaint();
     });
   }

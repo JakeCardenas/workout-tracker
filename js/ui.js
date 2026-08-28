@@ -99,7 +99,7 @@ const Stepper = (() => {
     const box = btn.closest("[data-stepper]");
     const dir = +btn.dataset.dir;
     bump(box, dir);
-    Sound.play("tap");
+    Sound.play("step");
     holdTimer = setTimeout(() => {
       let speed = 110;
       repeatTimer = setInterval(() => {
@@ -143,7 +143,6 @@ document.addEventListener("click", (e) => {
   row.querySelectorAll(".rest-chip").forEach((c) => c.classList.remove("is-on"));
   chip.classList.add("is-on");
   row.dataset.value = chip.dataset.rest;
-  Sound.play("tap");
   row.dispatchEvent(
     new CustomEvent("restchange", { bubbles: true, detail: { value: +chip.dataset.rest } }),
   );
@@ -164,7 +163,7 @@ const Sheet = (() => {
       </div>`;
     el.classList.add("is-open");
     document.body.classList.add("no-scroll");
-    Sound.play("tap");
+    Sound.play("swell");
     if (onMount) onMount(el.querySelector(".sheet-body"));
     const focusable = el.querySelector("input, button:not([data-close])");
     if (focusable) focusable.focus({ preventScroll: true });

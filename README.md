@@ -42,9 +42,10 @@ plus equipment primitives (barbell, dumbbell, bench, rack, cable stack), drawn
 as round-capped strokes on a 512 square. Each pose is auto-fitted to its tile
 from its own bounding box, so all 36 sit at the same visual weight.
 
-The detail view adds a second diagram, a **muscle map**, where the worked
-regions light up — primary solid, secondary faded — with front and back views
-built from the same part list.
+Each figure also carries its target muscles: soft discs sit under the strokes
+on the worked areas, solid for primary and faint for secondary, so a card shows
+both the movement and what it trains. The detail view adds a full **muscle
+map** on top of that, with front and back views built from one part list.
 
 All state lives in a single localStorage key (`reps.state.v1`) behind
 `store.js`. Views never touch storage directly, so swapping in a real backend
@@ -58,7 +59,15 @@ Cache busting is manual: `index.html` links CSS and JS with a `?v=` query. Bump
 it when you edit either, or a browser may pair a new file with a stale one.
 
 Sound is off-by-default-safe: no audio context exists until the first real
-interaction, and the toggle in the sidebar persists the choice.
+interaction, and the toggle in the sidebar persists the choice. Every cue is
+synthesized — filtered noise bursts and sine tones through a limiter — so
+hovering ticks, buttons click, panels swell, and banking a set, finishing a
+rest, hitting a record and completing a workout each get their own tone.
+
+Animations stay cheap: a stagger on the library grid, a stroke draw-on when a
+figure first appears, a spring on the set dots and the rest ring counting down.
+Everything collapses under `prefers-reduced-motion`, including the dash offsets
+that would otherwise leave a figure invisible.
 
 ## Credit
 

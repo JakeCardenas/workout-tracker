@@ -210,6 +210,41 @@ const App = (() => {
     });
   }
 
+  const HOVERS =
+    ".btn, .icon-btn, .chip, .rest-chip, .ctl-btn, .fav-btn, .step-btn, .link-btn," +
+    " .nav-link, .tab, .art-flip, .toast-action, .ex-card, .template-card," +
+    " .quick-card, .saved-card, .hist-card, .last-card, .prog-row, .build-main";
+
+  // a link stays silent on click: the hover tick already acknowledged it
+  const TAPS = "button, a.btn, .ex-card, .build-main, .hist-card, .last-card, .prog-row";
+  const OWN_CUE = ".step-btn, [data-sound-toggle]";
+
+  function wireSounds() {
+    let hovered = null;
+
+    document.addEventListener("pointerover", (e) => {
+      if (e.pointerType === "touch") return;
+      const el = e.target.closest(HOVERS);
+      if (!el || el === hovered || el.disabled) return;
+      hovered = el;
+      Sound.play("hover");
+    });
+
+    document.addEventListener("pointerout", (e) => {
+      if (hovered && !hovered.contains(e.relatedTarget)) hovered = null;
+    });
+
+    document.addEventListener(
+      "click",
+      (e) => {
+        const el = e.target.closest(TAPS);
+        if (!el || el.disabled || el.closest(OWN_CUE)) return;
+        Sound.play("tap");
+      },
+      true,
+    );
+  }
+
   function boot() {
     applyTheme(Store.state.settings.theme);
     Sound.restore(Store.state.settings.sound);
@@ -226,7 +261,6 @@ const App = (() => {
       if (themeBtn) {
         Store.setSetting("theme", themeBtn.dataset.themeBtn);
         applyTheme(themeBtn.dataset.themeBtn);
-        Sound.play("tap");
       }
 
       const soundBtn = e.target.closest("[data-sound-toggle]");
@@ -243,7 +277,7 @@ const App = (() => {
         const now = Store.toggleFavorite(fav.dataset.fav);
         fav.classList.toggle("is-on", now);
         fav.innerHTML = Icons.get(now ? "starFilled" : "star");
-        Sound.play(now ? "set" : "tap");
+        if (now) Sound.play("set");
         syncBadges();
         if (currentPath === "/favorites") repaint();
         return;
@@ -263,7 +297,6 @@ const App = (() => {
 
     document.getElementById("nav-toggle").addEventListener("click", () => {
       document.body.classList.toggle("nav-open");
-      Sound.play("tap");
     });
     document
       .getElementById("nav-scrim")
@@ -273,6 +306,7 @@ const App = (() => {
       link.addEventListener("click", () => document.body.classList.remove("nav-open")),
     );
 
+    wireSounds();
     paint(false);
     document.body.classList.add("is-ready");
   }

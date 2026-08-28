@@ -14,10 +14,11 @@ function levelClass(level) {
   return `level level--${level.toLowerCase()}`;
 }
 
-function exerciseCard(ex) {
+function exerciseCard(ex, index = 0) {
   const fav = Store.isFavorite(ex.id);
   return `
-    <article class="ex-card" data-ex="${ex.id}" tabindex="0" role="button" aria-label="${esc(ex.name)}">
+    <article class="ex-card" data-ex="${ex.id}" tabindex="0" role="button" aria-label="${esc(ex.name)}"
+             style="--i:${Math.min(index, 14)}">
       <button class="fav-btn${fav ? " is-on" : ""}" type="button" data-fav="${ex.id}"
               aria-label="${fav ? "Remove from" : "Add to"} favorites">${Icons.get(fav ? "starFilled" : "star")}</button>
       <div class="ex-art">
@@ -73,7 +74,7 @@ const ExerciseSheet = (() => {
       <div class="detail-grid">
         <figure class="detail-art">
           <span class="ex-equip" title="${ex.equipment}">${Icons.equipment(ex.equipment)}</span>
-          ${Figure.render(ex.id)}
+          ${Figure.render(ex.id, "fig--draw")}
         </figure>
 
         <div class="detail-side">
@@ -140,7 +141,6 @@ const ExerciseSheet = (() => {
           fig.dataset.view = next;
           fig.querySelector(".mm").outerHTML = MuscleMap.render(ex.primary, ex.secondary, next, "mm--md");
           scope.querySelector("[data-flip-label]").textContent = next === "front" ? "Back" : "Front";
-          Sound.play("tap");
         });
 
         const config = scope.querySelector("[data-config]");
@@ -275,7 +275,6 @@ const LibraryView = (() => {
         const value = chip.dataset.value;
         set.has(value) ? set.delete(value) : set.add(value);
         chip.classList.toggle("is-on");
-        Sound.play("tap");
         repaintResults(root);
         refreshChrome(root, true);
         return;

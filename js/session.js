@@ -28,6 +28,7 @@ const Session = (() => {
     };
     root().classList.add("is-on");
     document.body.classList.add("no-scroll");
+    Sound.play("swell");
     paint();
   }
 
@@ -59,6 +60,8 @@ const Session = (() => {
     const { exercise, set, meta } = current();
     const s = stepsFor(meta);
     const progress = (doneSets() / totalSets()) * 100;
+    const fresh = live.drawn !== live.exIndex;
+    live.drawn = live.exIndex;
 
     root().innerHTML = `
       <div class="session-shell">
@@ -77,7 +80,7 @@ const Session = (() => {
           <h1 class="session-ex">${esc(meta.name)}</h1>
           <p class="session-set mono">Set ${live.setIndex + 1} of ${exercise.sets.length}</p>
 
-          <div class="session-art">${Figure.render(meta.id)}</div>
+          <div class="session-art">${Figure.render(meta.id, fresh ? "fig--draw" : "")}</div>
 
           <div class="session-dots" aria-hidden="true">
             ${exercise.sets
@@ -357,7 +360,6 @@ const Session = (() => {
       if (live.exIndex === live.exercises.length - 1 && live.setIndex === live.exercises[live.exIndex].sets.length - 1)
         return finish();
       advance();
-      Sound.play("tap");
       return paint();
     }
     if (e.target.closest("[data-skip-rest]")) return endRest(false);
@@ -366,7 +368,6 @@ const Session = (() => {
       live.rest.total += 30;
       live.rest.warned.clear();
       root().querySelector("[data-rest-layer]").classList.remove("is-final");
-      Sound.play("tap");
       return;
     }
     if (e.target.closest("[data-exit]")) return exit(false);

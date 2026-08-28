@@ -869,6 +869,8 @@ svg {
 }
 
 .ex-card {
+  animation: cardIn 0.4s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 22ms);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -946,6 +948,41 @@ svg {
 }
 .fig .gr:not([stroke-width]) {
   stroke-width: 10;
+}
+.fig .hot,
+.fig .warm {
+  fill: var(--fg);
+  stroke: none;
+}
+.fig .hot {
+  opacity: 0.19;
+}
+.fig .warm {
+  opacity: 0.09;
+}
+.ex-card:hover .fig .hot {
+  opacity: 0.3;
+}
+
+.fig--draw .lm,
+.fig--draw .hd,
+.fig--draw .gr {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: drawIn 0.9s var(--ease) forwards;
+}
+.fig--draw .gr {
+  animation-duration: 0.7s;
+}
+.fig--draw .hot,
+.fig--draw .warm {
+  animation: spotIn 0.5s var(--ease) 0.5s both;
+}
+@keyframes drawIn {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes spotIn {
+  from { opacity: 0; transform: scale(0.6); }
 }
 
 .mm {
@@ -1537,6 +1574,11 @@ svg {
     opacity 0.18s var(--ease), transform 0.18s var(--ease);
   animation: rowIn 0.28s var(--ease) both;
 }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
 @keyframes rowIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -2438,6 +2480,12 @@ svg {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+  .fig--draw .lm,
+  .fig--draw .hd,
+  .fig--draw .gr {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
   }
   .content.is-entering {
     animation: none;
