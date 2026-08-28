@@ -293,10 +293,51 @@ svg {
 .ctl-btn--sound.is-off {
   color: var(--fg-faint);
 }
+.ctl-btn--unit {
+  width: auto;
+  min-width: 2.3rem;
+  padding: 0 0.5rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+}
+.ctl-btn--unit:hover {
+  color: var(--fg);
+}
 .side-note {
+  width: 100%;
   font-size: 0.63rem;
   color: var(--fg-faint);
   text-align: center;
+  border-bottom: 1px solid transparent;
+  transition: color 0.16s var(--ease), border-color 0.16s var(--ease);
+}
+.side-note:hover {
+  color: var(--fg-dim);
+  border-color: var(--border);
+}
+
+.data-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-soft);
+}
+.data-rows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  font-size: 0.8rem;
+}
+.data-rows dt {
+  color: var(--fg-dim);
+}
+.data-rows dd {
+  font-family: "Geist Mono", ui-monospace, monospace;
 }
 
 .nav-scrim {
@@ -934,7 +975,10 @@ svg {
 }
 .fig .lm,
 .fig .hd,
-.fig .gr {
+.fig .tor,
+.fig .gr,
+.fig .hot,
+.fig .warm {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -943,29 +987,38 @@ svg {
 .fig .hd {
   stroke: var(--fg);
 }
+.fig .tor {
+  stroke: var(--fg);
+  stroke-width: 20;
+}
 .fig .gr {
   stroke: var(--fg-faint);
 }
 .fig .gr:not([stroke-width]) {
   stroke-width: 10;
 }
-.fig .hot,
-.fig .warm {
-  fill: var(--fg);
+.fig .sd {
+  fill: var(--fg-faint);
   stroke: none;
 }
+.fig .hot,
+.fig .warm {
+  stroke: var(--fg);
+}
 .fig .hot {
-  opacity: 0.19;
+  opacity: 0.4;
 }
 .fig .warm {
-  opacity: 0.09;
+  opacity: 0.18;
 }
-.ex-card:hover .fig .hot {
-  opacity: 0.3;
+.ex-card:hover .fig .hot,
+.detail-art .fig .hot {
+  opacity: 0.55;
 }
 
 .fig--draw .lm,
 .fig--draw .hd,
+.fig--draw .tor,
 .fig--draw .gr {
   stroke-dasharray: 1400;
   stroke-dashoffset: 1400;
@@ -1048,16 +1101,18 @@ svg {
   color: var(--fg-dim);
 }
 .level--beginner {
-  color: var(--ok);
-  border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+  color: var(--fg-dim);
+  border-color: var(--border);
 }
 .level--intermediate {
   color: var(--fg-muted);
+  background: var(--bg-softer);
   border-color: var(--border-strong);
 }
 .level--advanced {
-  color: var(--accent);
-  border-color: var(--accent-line);
+  color: var(--bg);
+  background: var(--fg);
+  border-color: var(--fg);
 }
 
 .fav-btn {
@@ -2483,6 +2538,7 @@ svg {
   }
   .fig--draw .lm,
   .fig--draw .hd,
+  .fig--draw .tor,
   .fig--draw .gr {
     stroke-dasharray: none;
     stroke-dashoffset: 0;

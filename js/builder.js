@@ -30,7 +30,7 @@ function openItemEditor(item, onSave) {
         <div class="config-grid">
           ${Stepper.markup({ name: "sets", value: item.sets, min: 1, max: 12, step: 1, label: "Sets" })}
           ${Stepper.markup({ name: "reps", value: item.reps, min: s.repsMin, max: s.repsMax, step: s.repsStep, label: s.repsLabel })}
-          ${Stepper.markup({ name: "weight", value: item.weight, min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: " kg" })}
+          ${Stepper.markup({ name: "weight", value: Units.fromKg(item.weight), min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: ` ${Units.label()}` })}
         </div>
         ${RestPicker.markup(item.rest)}
         <button class="btn btn--primary btn--block" type="button" data-save>${Icons.get("check")} Save changes</button>
@@ -41,7 +41,7 @@ function openItemEditor(item, onSave) {
         onSave({
           sets: Stepper.read(config, "sets"),
           reps: Stepper.read(config, "reps"),
-          weight: Stepper.read(config, "weight"),
+          weight: Units.toKg(Stepper.read(config, "weight")),
           rest: +config.querySelector("[data-rest-picker]").dataset.value,
         });
         Sheet.close();

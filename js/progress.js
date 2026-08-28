@@ -180,11 +180,11 @@ const ProgressView = (() => {
 
         <div class="prog-compare mono">
           ${prior
-            ? `<span class="prog-prev">${prior.weight}${meta.unit === "sec" ? "s" : "kg"} × ${prior.reps}</span>
+            ? `<span class="prog-prev">${Fmt.weight(prior.weight, meta.unit)} × ${prior.reps}</span>
                <span class="prog-arrow">${Icons.get("forward")}</span>`
             : ""}
-          <span class="prog-now">${latest.weight}${meta.unit === "sec" ? "s" : "kg"} × ${latest.reps}</span>
-          ${delta > 0 ? `<span class="prog-delta is-up">+${(+delta.toFixed(1))}</span>` : ""}
+          <span class="prog-now">${Fmt.weight(latest.weight, meta.unit)} × ${latest.reps}</span>
+          ${delta > 0 ? `<span class="prog-delta is-up">+${Units.fromKg(delta)}</span>` : ""}
           ${latest.weight >= (rec ? rec.bestWeight : 0) && points.length > 1 && delta > 0 ? `<span class="pr-badge mono">PR</span>` : ""}
         </div>
 

@@ -1,99 +1,108 @@
 const Figure = (() => {
   const poly = (pts) => "M " + pts.map((p) => p.join(" ")).join(" L ");
   const lm = (pts, w) => `<path class="lm"${w ? ` stroke-width="${w}"` : ""} d="${poly(pts)}"/>`;
-  const hd = (x, y, r = 25) => `<circle class="hd" cx="${x}" cy="${y}" r="${r}"/>`;
+  const tor = (pts) => `<path class="tor" d="${poly(pts)}"/>`;
+  const hd = (x, y, r = 23) => `<circle class="hd" cx="${x}" cy="${y}" r="${r}"/>`;
   const gr = (d, w) => `<path class="gr"${w ? ` stroke-width="${w}"` : ""} d="${d}"/>`;
+  const sd = (x, y, w, h, r = 3) =>
+    `<rect class="sd" x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${r}"/>`;
+  const foot = (x, y, dir = 1) => lm([[x, y], [x + 26 * dir, y]], 13);
 
   const G = {
-    floor: (y = 462) => gr(`M 62 ${y} L 450 ${y}`),
+    floor: (y = 462) => gr(`M 62 ${y} L 450 ${y}`, 7),
 
     bar: (x, y, half = 128) =>
-      gr(`M ${x - half} ${y} L ${x + half} ${y}`) +
-      gr(`M ${x - half + 6} ${y - 31} L ${x - half + 6} ${y + 31}`, 13) +
-      gr(`M ${x - half + 29} ${y - 20} L ${x - half + 29} ${y + 20}`, 13) +
-      gr(`M ${x + half - 6} ${y - 31} L ${x + half - 6} ${y + 31}`, 13) +
-      gr(`M ${x + half - 29} ${y - 20} L ${x + half - 29} ${y + 20}`, 13),
+      gr(`M ${x - half} ${y} L ${x + half} ${y}`, 7) +
+      sd(x - half + 11, y, 12, 78, 4) +
+      sd(x - half + 31, y, 10, 52, 3) +
+      sd(x + half - 11, y, 12, 78, 4) +
+      sd(x + half - 31, y, 10, 52, 3),
 
-    db: (x, y, tilt = 0) => {
-      const r = (tilt * Math.PI) / 180;
-      const dx = Math.cos(r) * 23;
-      const dy = Math.sin(r) * 23;
-      const nx = -Math.sin(r) * 16;
-      const ny = Math.cos(r) * 16;
-      return (
-        gr(`M ${x - dx} ${y - dy} L ${x + dx} ${y + dy}`) +
-        gr(`M ${x - dx - nx} ${y - dy - ny} L ${x - dx + nx} ${y - dy + ny}`, 13) +
-        gr(`M ${x + dx - nx} ${y + dy - ny} L ${x + dx + nx} ${y + dy + ny}`, 13)
-      );
-    },
+    db: (x, y, tilt = 0) =>
+      `<g transform="rotate(${tilt} ${x} ${y})">` +
+      gr(`M ${x - 20} ${y} L ${x + 20} ${y}`, 7) +
+      sd(x - 23, y, 13, 50, 4) +
+      sd(x + 23, y, 13, 50, 4) +
+      `</g>`,
 
     bench: (cx, top, half = 124) =>
-      gr(`M ${cx - half} ${top} L ${cx + half} ${top}`, 13) +
-      gr(`M ${cx - half + 26} ${top} L ${cx - half + 26} 462`) +
-      gr(`M ${cx + half - 26} ${top} L ${cx + half - 26} 462`),
+      sd(cx, top, half * 2, 18, 7) +
+      gr(`M ${cx - half + 32} ${top + 9} L ${cx - half + 32} 462`, 9) +
+      gr(`M ${cx + half - 32} ${top + 9} L ${cx + half - 32} 462`, 9),
 
     incline: (cx, top) =>
-      gr(`M ${cx - 122} ${top + 70} L ${cx + 104} ${top - 30}`, 13) +
-      gr(`M ${cx - 96} ${top + 58} L ${cx - 96} 462`) +
-      gr(`M ${cx + 80} ${top - 18} L ${cx + 80} 462`),
+      `<g transform="rotate(-24 ${cx} ${top + 20})">` +
+      sd(cx, top + 20, 234, 18, 7) +
+      `</g>` +
+      gr(`M ${cx - 88} ${top + 66} L ${cx - 88} 462`, 9) +
+      gr(`M ${cx + 78} ${top - 8} L ${cx + 78} 462`, 9),
 
     rig: (y = 92) =>
-      gr(`M 122 ${y} L 390 ${y}`) +
-      gr(`M 144 ${y} L 144 462`) +
-      gr(`M 368 ${y} L 368 462`),
+      gr(`M 122 ${y} L 390 ${y}`, 11) +
+      gr(`M 144 ${y} L 144 462`, 11) +
+      gr(`M 368 ${y} L 368 462`, 11),
 
     stack: (x, top = 104, bottom = 392) =>
-      gr(`M ${x - 38} ${top} L ${x + 38} ${top} L ${x + 38} ${bottom} L ${x - 38} ${bottom} Z`) +
-      gr(`M ${x - 24} ${top + 44} L ${x + 24} ${top + 44}`, 9) +
-      gr(`M ${x - 24} ${top + 72} L ${x + 24} ${top + 72}`, 9),
+      gr(`M ${x - 40} ${top} L ${x + 40} ${top} L ${x + 40} ${bottom} L ${x - 40} ${bottom} Z`, 8) +
+      sd(x, top + 40, 56, 13, 3) +
+      sd(x, top + 62, 56, 13, 3) +
+      sd(x, top + 84, 56, 13, 3),
 
-    cable: (pts) => gr(poly(pts), 7),
+    cable: (pts) => gr(poly(pts), 6),
 
     seat: (cx, top, half = 60) =>
-      gr(`M ${cx - half} ${top} L ${cx + half} ${top}`, 13) +
-      gr(`M ${cx} ${top} L ${cx} 462`),
+      sd(cx, top, half * 2, 16, 6) + gr(`M ${cx} ${top + 8} L ${cx} 462`, 9),
 
-    pad: (x, y, half = 26) => gr(`M ${x} ${y - half} L ${x} ${y + half}`, 15),
+    pad: (x, y, half = 26) => sd(x, y, 16, half * 2, 7),
+
+    wheel: (x, y, r) => `<circle class="gr" cx="${x}" cy="${y}" r="${r}"/>`,
+
+    pulley: (x, y = 58) =>
+      gr(`M ${x - 44} ${y} L ${x + 44} ${y}`, 9) +
+      `<circle class="gr" cx="${x}" cy="${y + 16}" r="12"/>`,
   };
 
   const front = (opts = {}) => {
     const sy = opts.shoulderY || 158;
     const hy = opts.hipY || 300;
     return [
-      hd(256, 94),
-      lm([[256, 120], [256, hy]]),
+      hd(256, 90),
+      lm([[256, 113], [256, 136]], 12),
+      tor([[256, 136], [256, hy]]),
       lm([[204, sy], [308, sy]]),
-      lm([[256, hy], [218, 382], [212, 458]]),
-      lm([[256, hy], [294, 382], [300, 458]]),
+      lm([[256, hy], [218, 382], [212, 452]]),
+      lm([[256, hy], [294, 382], [300, 452]]),
+      foot(212, 456, -1),
+      foot(300, 456, 1),
     ];
   };
 
   const side = (opts = {}) => {
     const hy = opts.hipY || 298;
     return [
-      hd(252, 94),
-      lm([[252, 120], [252, hy]]),
-      lm([[252, hy], [280, 382], [292, 458]]),
-      lm([[252, hy], [228, 382], [214, 458]]),
+      hd(252, 90),
+      lm([[252, 113], [252, 136]], 12),
+      tor([[252, 136], [252, hy]]),
+      lm([[252, hy], [280, 382], [292, 452]]),
+      lm([[252, hy], [228, 382], [214, 452]]),
+      foot(292, 456, 1),
+      foot(214, 456, 1),
     ];
   };
-
-  G.wheel = (x, y, r) => `<circle class="gr" cx="${x}" cy="${y}" r="${r}"/>`;
-  G.pulley = (x, y = 58) => gr(`M ${x - 46} ${y} L ${x + 46} ${y}`);
 
   const lying = (extra) => [
     G.floor(),
     G.bench(250, 320),
-    hd(160, 296, 24),
-    lm([[188, 308], [318, 308]]),
+    hd(160, 296, 22),
+    tor([[188, 308], [318, 308]]),
     lm([[318, 308], [368, 362], [356, 462]]),
     ...extra,
   ];
 
   const hinge = (barY, extra = []) => [
     G.floor(),
-    hd(184, 170, 24),
-    lm([[210, 192], [316, 266]]),
+    hd(184, 170, 22),
+    tor([[210, 192], [316, 266]]),
     lm([[316, 266], [318, 364], [310, 462]]),
     lm([[316, 266], [298, 364], [292, 462]]),
     ...extra,
@@ -426,50 +435,50 @@ const Figure = (() => {
 
 
   const FOCUS = {
-    "bench-press": { p: [[230, 306]], s: [[201, 274]] },
-    "dumbbell-bench-press": { p: [[230, 306]], s: [[192, 278], [216, 278]] },
-    "chest-fly": { p: [[230, 306]], s: [[186, 282], [224, 282]] },
-    "skull-crushers": { p: [[209, 274]], s: [] },
-    "incline-bench-press": { p: [[228, 280]], s: [[206, 238]] },
-    "incline-dumbbell-press": { p: [[228, 280]], s: [[197, 239], [219, 239]] },
-    "cable-crossover": { p: [[256, 182]], s: [[194, 192], [318, 192]] },
-    "push-ups": { p: [[206, 340]], s: [[182, 368]] },
-    "pull-ups": { p: [[240, 244], [272, 244]], s: [[199, 173], [313, 173]] },
-    "hanging-leg-raise": { p: [[243, 300]], s: [[185, 131], [291, 131]] },
-    "lat-pulldown": { p: [[242, 250], [270, 250]], s: [[180, 177], [332, 177]] },
-    "seated-cable-row": { p: [[212, 300]], s: [[241, 274]] },
-    "barbell-row": { p: [[250, 220]], s: [[222, 239]] },
-    "rear-delt-fly": { p: [[200, 224], [242, 224]], s: [[262, 200]] },
-    "deadlift": { p: [[268, 246]], s: [[302, 300], [290, 356]] },
-    "romanian-deadlift": { p: [[316, 310]], s: [[314, 266]] },
-    "dumbbell-row": { p: [[232, 242]], s: [[204, 264]] },
-    "overhead-press": { p: [[204, 160], [308, 160]], s: [[185, 183], [327, 183]] },
-    "dumbbell-shoulder-press": { p: [[204, 160], [308, 160]], s: [[184, 182], [328, 182]] },
-    "lateral-raises": { p: [[204, 159], [308, 159]], s: [] },
-    "front-raises": { p: [[254, 153]], s: [] },
-    "face-pulls": { p: [[204, 158], [308, 158]], s: [[256, 176]] },
-    "barbell-curl": { p: [[257, 195]], s: [] },
-    "dumbbell-curl": { p: [[257, 195]], s: [] },
-    "hammer-curl": { p: [[257, 195]], s: [[300, 224]] },
-    "tricep-pushdown": { p: [[257, 193]], s: [] },
-    "overhead-tricep-extension": { p: [[270, 111]], s: [] },
-    "squat": { p: [[268, 328]], s: [[296, 300]] },
-    "leg-press": { p: [[284, 352]], s: [[246, 378]] },
-    "leg-extension": { p: [[255, 325]], s: [] },
-    "leg-curl": { p: [[345, 301]], s: [] },
-    "calf-raises": { p: [[273, 383], [230, 383]], s: [] },
-    "plank": { p: [[260, 387]], s: [[300, 396]] },
-    "cable-crunch": { p: [[268, 292]], s: [] },
-    "russian-twist": { p: [[233, 327]], s: [] },
-    "ab-wheel-rollout": { p: [[274, 346]], s: [[240, 316]] },
+    "bench-press": { p: [[[196, 308], [242, 308]]], s: [[[204, 308], [198, 248]]] },
+    "dumbbell-bench-press": { p: [[[196, 308], [242, 308]]], s: [[[204, 308], [182, 252]], [[204, 308], [226, 252]]] },
+    "chest-fly": { p: [[[196, 308], [246, 308]]], s: [[[204, 308], [170, 258]], [[204, 308], [238, 258]]] },
+    "skull-crushers": { p: [[[204, 308], [212, 246]]], s: [] },
+    "incline-bench-press": { p: [[[202, 264], [248, 290]]], s: [[[208, 268], [205, 214]]] },
+    "incline-dumbbell-press": { p: [[[202, 264], [248, 290]]], s: [[[208, 268], [188, 216]], [[208, 268], [228, 216]]] },
+    "cable-crossover": { p: [[[256, 150], [256, 212]]], s: [[[204, 158], [186, 220]], [[308, 158], [326, 220]]] },
+    "push-ups": { p: [[[182, 332], [240, 350]]], s: [[[190, 336], [176, 396]]] },
+    "pull-ups": { p: [[[256, 196], [256, 300]]], s: [[[204, 198], [195, 154]], [[308, 198], [317, 154]]] },
+    "hanging-leg-raise": { p: [[[242, 276], [248, 352]]], s: [[[182, 168], [188, 104]], [[294, 168], [288, 104]]] },
+    "lat-pulldown": { p: [[[256, 200], [256, 300]]], s: [[[204, 198], [174, 162]], [[308, 198], [338, 162]]] },
+    "seated-cable-row": { p: [[[204, 240], [220, 330]]], s: [[[210, 250], [268, 296]]] },
+    "barbell-row": { p: [[[212, 194], [286, 246]]], s: [[[216, 200], [227, 272]]] },
+    "rear-delt-fly": { p: [[[220, 202], [176, 246]], [[220, 202], [256, 246]]], s: [] },
+    "deadlift": { p: [[[214, 202], [306, 284]]], s: [[[308, 286], [290, 350]]] },
+    "romanian-deadlift": { p: [[[318, 258], [314, 356]]], s: [[[300, 246], [318, 262]]] },
+    "dumbbell-row": { p: [[[194, 220], [268, 264]]], s: [[[202, 226], [205, 294]]] },
+    "overhead-press": { p: [[[204, 158], [170, 202]], [[308, 158], [342, 202]]], s: [[[168, 206], [178, 132]], [[344, 206], [334, 132]]] },
+    "dumbbell-shoulder-press": { p: [[[204, 158], [168, 200]], [[308, 158], [344, 200]]], s: [[[166, 204], [176, 134]], [[346, 204], [336, 134]]] },
+    "lateral-raises": { p: [[[204, 158], [156, 163]], [[308, 158], [356, 163]]], s: [] },
+    "front-raises": { p: [[[252, 152], [308, 158]]], s: [] },
+    "face-pulls": { p: [[[204, 158], [150, 122]], [[308, 158], [362, 122]]], s: [] },
+    "barbell-curl": { p: [[[252, 152], [261, 232]]], s: [] },
+    "dumbbell-curl": { p: [[[252, 152], [261, 232]]], s: [] },
+    "hammer-curl": { p: [[[252, 152], [261, 232]]], s: [[[266, 240], [330, 210]]] },
+    "tricep-pushdown": { p: [[[252, 152], [261, 228]]], s: [] },
+    "overhead-tricep-extension": { p: [[[252, 152], [285, 78]]], s: [] },
+    "squat": { p: [[[298, 294], [240, 356]]], s: [[[278, 268], [300, 294]]] },
+    "leg-press": { p: [[[244, 380], [322, 326]]], s: [[[228, 372], [246, 382]]] },
+    "leg-extension": { p: [[[212, 322], [296, 328]]], s: [] },
+    "leg-curl": { p: [[[318, 310], [370, 294]]], s: [] },
+    "calf-raises": { p: [[[271, 350], [274, 408]], [[233, 350], [229, 408]]], s: [] },
+    "plank": { p: [[[182, 368], [306, 398]]], s: [[[340, 406], [390, 426]]] },
+    "cable-crunch": { p: [[[248, 216], [272, 316]]], s: [] },
+    "russian-twist": { p: [[[200, 288], [266, 366]]], s: [] },
+    "ab-wheel-rollout": { p: [[[234, 302], [314, 390]]], s: [[[238, 308], [190, 354]]] },
   };
 
   const spots = (exId) => {
     const f = FOCUS[exId];
     if (!f) return "";
-    const disc = (cls, r) => ([x, y]) =>
-      `<circle class="${cls}" cx="${x}" cy="${y}" r="${r}"/>`;
-    return f.s.map(disc("warm", 24)).join("") + f.p.map(disc("hot", 31)).join("");
+    const band = (cls, w) => (seg) =>
+      `<path class="${cls}" stroke-width="${w}" d="${poly(seg)}"/>`;
+    return f.s.map(band("warm", 26)).join("") + f.p.map(band("hot", 30)).join("");
   };
 
   function bounds(markup) {
@@ -485,11 +494,19 @@ const Figure = (() => {
       for (let i = 0; i + 1 < n.length; i += 2) seen(n[i], n[i + 1]);
       return "";
     });
-    markup.replace(/cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/g, (_, cx, cy, r) => {
+    markup.replace(/cx="([\d.-]+)" cy="([\d.-]+)" r="([\d.]+)"/g, (_, cx, cy, r) => {
       seen(+cx - +r, +cy - +r);
       seen(+cx + +r, +cy + +r);
       return "";
     });
+    markup.replace(
+      /x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"/g,
+      (_, x, y, w, h) => {
+        seen(+x, +y);
+        seen(+x + +w, +y + +h);
+        return "";
+      },
+    );
     return { x0, y0, x1, y1 };
   }
 

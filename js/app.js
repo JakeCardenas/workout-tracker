@@ -201,6 +201,56 @@ const App = (() => {
     );
   }
 
+  function openDataSheet() {
+    const { favorites, workouts, history, records } = Store.state;
+    const bytes = new Blob([localStorage.getItem("reps.state.v1") || ""]).size;
+    const row = (label, value) => `<div><dt>${label}</dt><dd>${value}</dd></div>`;
+
+    Sheet.open({
+      title: "Your data",
+      body: `
+        <header class="detail-head">
+          <div>
+            <h2 class="detail-title">Your data</h2>
+            <p class="detail-meta mono">Everything stays in this browser. Nothing is uploaded.</p>
+          </div>
+        </header>
+        <dl class="data-rows">
+          ${row("Saved workouts", workouts.length)}
+          ${row("Logged sessions", history.length)}
+          ${row("Favorites", favorites.length)}
+          ${row("Tracked movements", Object.keys(records).length)}
+          ${row("Storage used", `${(bytes / 1024).toFixed(1)} KB`)}
+        </dl>
+        <div class="confirm-actions">
+          <button class="btn btn--danger" type="button" data-reset-all>${Icons.get("trash")} Erase everything</button>
+          <button class="btn" type="button" data-close>Close</button>
+        </div>`,
+      onMount(scope) {
+        scope.querySelector("[data-reset-all]").addEventListener("click", () => {
+          Store.reset();
+          Units.set(Store.state.settings.unit);
+          applyTheme(Store.state.settings.theme);
+          syncUnitButtons();
+          Sheet.close();
+          Sound.play("remove");
+          repaint();
+          Toast.show("All data erased");
+        });
+      },
+    });
+  }
+
+  function syncUnitButtons() {
+    document.querySelectorAll("[data-unit-toggle]").forEach((b) => {
+      b.textContent = Units.label().toUpperCase();
+      b.setAttribute(
+        "aria-label",
+        `Weight unit ${Units.label()}. Switch to ${Units.isLb() ? "kilograms" : "pounds"}`,
+      );
+    });
+  }
+
   function syncSoundButtons() {
     const on = Sound.isEnabled();
     document.querySelectorAll("[data-sound-toggle]").forEach((b) => {
@@ -247,6 +297,8 @@ const App = (() => {
 
   function boot() {
     applyTheme(Store.state.settings.theme);
+    Units.set(Store.state.settings.unit);
+    syncUnitButtons();
     Sound.restore(Store.state.settings.sound);
     syncSoundButtons();
 
@@ -261,6 +313,18 @@ const App = (() => {
       if (themeBtn) {
         Store.setSetting("theme", themeBtn.dataset.themeBtn);
         applyTheme(themeBtn.dataset.themeBtn);
+      }
+
+      if (e.target.closest("[data-open-data]")) openDataSheet();
+
+      const unitBtn = e.target.closest("[data-unit-toggle]");
+      if (unitBtn) {
+        const next = Units.isLb() ? "kg" : "lb";
+        Units.set(next);
+        Store.setSetting("unit", next);
+        syncUnitButtons();
+        repaint();
+        Toast.show(`Weights now in ${next === "lb" ? "pounds" : "kilograms"}`);
       }
 
       const soundBtn = e.target.closest("[data-sound-toggle]");
@@ -311,7 +375,7 @@ const App = (() => {
     document.body.classList.add("is-ready");
   }
 
-  return { boot, paint, repaint, syncSoundButtons, syncBadges };
+  return { boot, paint, repaint, syncSoundButtons, syncUnitButtons, syncBadges };
 })();
 
 document.addEventListener("DOMContentLoaded", App.boot);

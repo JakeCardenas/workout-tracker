@@ -93,7 +93,7 @@ const Session = (() => {
 
           <div class="session-config" data-config>
             ${Stepper.markup({ name: "reps", value: set.reps, min: s.repsMin, max: s.repsMax, step: s.repsStep, label: s.repsLabel, wide: true })}
-            ${Stepper.markup({ name: "weight", value: set.weight, min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: " kg", wide: true })}
+            ${Stepper.markup({ name: "weight", value: Units.fromKg(set.weight), min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: ` ${Units.label()}`, wide: true })}
           </div>
 
           <button class="btn btn--primary btn--xl" type="button" data-complete>${Icons.get("check")} Complete Set</button>
@@ -111,9 +111,10 @@ const Session = (() => {
     const config = root().querySelector("[data-config]");
     config.addEventListener("stepper", (e) => {
       const { exercise: ex, set: active } = current();
-      active[e.detail.name] = e.detail.value;
+      const value = e.detail.name === "weight" ? Units.toKg(e.detail.value) : e.detail.value;
+      active[e.detail.name] = value;
       ex.sets.forEach((x, i) => {
-        if (i > live.setIndex && !x.done) x[e.detail.name] = e.detail.value;
+        if (i > live.setIndex && !x.done) x[e.detail.name] = value;
       });
     });
   }
@@ -281,7 +282,7 @@ const Session = (() => {
             ${stat("Exercises", s.exercises)}
             ${stat("Sets", s.sets)}
             ${stat("Total reps", s.reps)}
-            ${stat("Volume", Math.round(s.volume))}
+            ${stat(`Volume ${Units.label()}`, Math.round(Units.fromKg(s.volume)))}
             ${stat("Minutes", Math.max(1, Math.round(s.duration / 60000)))}
           </dl>
 

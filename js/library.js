@@ -1,7 +1,7 @@
 function stepsFor(ex) {
   return {
-    weightStep: ex.equipment === "Bodyweight" ? 1 : 2.5,
-    weightMax: 400,
+    weightStep: Units.plate(ex.equipment),
+    weightMax: Units.max(),
     repsStep: ex.unit === "sec" ? 5 : 1,
     repsMin: ex.unit === "sec" ? 5 : 1,
     repsMax: ex.unit === "sec" ? 600 : 100,
@@ -117,7 +117,7 @@ const ExerciseSheet = (() => {
         <div class="config-grid">
           ${Stepper.markup({ name: "sets", value: cfg.sets, min: 1, max: 12, step: 1, label: "Sets" })}
           ${Stepper.markup({ name: "reps", value: cfg.reps, min: s.repsMin, max: s.repsMax, step: s.repsStep, label: s.repsLabel })}
-          ${Stepper.markup({ name: "weight", value: cfg.weight, min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: " kg" })}
+          ${Stepper.markup({ name: "weight", value: Units.fromKg(cfg.weight), min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: ` ${Units.label()}` })}
         </div>
         ${RestPicker.markup(cfg.rest)}
         <button class="btn btn--primary btn--block" type="button" data-add="${ex.id}">
@@ -147,7 +147,7 @@ const ExerciseSheet = (() => {
         const readConfig = () => ({
           sets: Stepper.read(config, "sets"),
           reps: Stepper.read(config, "reps"),
-          weight: Stepper.read(config, "weight"),
+          weight: Units.toKg(Stepper.read(config, "weight")),
           rest: +config.querySelector("[data-rest-picker]").dataset.value,
         });
 

@@ -26,6 +26,7 @@ nothing is fetched at runtime.
       data/templates.js     six starting workouts
       store.js              one localStorage document plus every mutation
       sound.js              synthesized cues for sets, rest and records
+      units.js              kg / lb conversion, one canonical unit
       icons.js              icon set and the muscle map renderer
       figures.js            pose system that draws every exercise
       ui.js                 steppers, sheets, toasts, formatting
@@ -50,6 +51,11 @@ map** on top of that, with front and back views built from one part list.
 All state lives in a single localStorage key (`reps.state.v1`) behind
 `store.js`. Views never touch storage directly, so swapping in a real backend
 means rewriting `load` and `persist` and leaving everything else alone.
+
+Weight is always stored in kilograms. `units.js` converts only at the edges —
+on the way into a stepper and on the way back out — so switching to pounds
+never rewrites your history, and the numbers snap to real plate increments
+(2.5 kg or 5 lb) instead of showing 132.27.
 
 The rest timer works off timestamps rather than a counter, so backgrounding the
 tab does not drift it. `visibilitychange` restarts the animation loop the

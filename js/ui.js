@@ -6,10 +6,10 @@ const esc = (s) =>
 const Fmt = {
   weight(n, unit) {
     if (unit === "sec") return `${n} sec`;
-    return n > 0 ? `${n} kg` : "Bodyweight";
+    return n > 0 ? `${Units.fromKg(n)} ${Units.label()}` : "Bodyweight";
   },
   volume(n) {
-    return `${Math.round(n).toLocaleString("en-US")} kg`;
+    return `${Math.round(Units.fromKg(n)).toLocaleString("en-US")} ${Units.label()}`;
   },
   reps(n, unit) {
     return unit === "sec" ? `${n} sec` : `${n} reps`;
