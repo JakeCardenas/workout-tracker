@@ -272,6 +272,31 @@ const App = (() => {
     });
   }
 
+  function openAccountSheet() {
+    Sheet.open({
+      title: "Account",
+      body: `
+        <header class="detail-head">
+          <div>
+            <h2 class="detail-title">Signed in</h2>
+            <p class="detail-meta mono">${esc(Api.user.email)}</p>
+          </div>
+        </header>
+        <p class="detail-summary">Every change is pushed to your account a moment after you make it,
+        and pulled back down when you sign in somewhere else. Sign out and this device keeps its own copy.</p>
+        <div class="confirm-actions">
+          <button class="btn" type="button" data-sign-out>Sign out</button>
+          <button class="btn" type="button" data-close>Close</button>
+        </div>`,
+      onMount(scope) {
+        scope.querySelector("[data-sign-out]").addEventListener("click", () => {
+          Sheet.close();
+          Auth.signOut();
+        });
+      },
+    });
+  }
+
   function syncUnitButtons() {
     document.querySelectorAll("[data-unit-toggle]").forEach((b) => {
       b.textContent = Units.label().toUpperCase();
@@ -347,6 +372,9 @@ const App = (() => {
       }
 
       if (e.target.closest("[data-open-data]")) openDataSheet();
+      if (e.target.closest("[data-open-account]")) {
+        Auth.signedIn() ? openAccountSheet() : Auth.openSheet("signin");
+      }
 
       const unitBtn = e.target.closest("[data-unit-toggle]");
       if (unitBtn) {
@@ -404,6 +432,9 @@ const App = (() => {
     wireSounds();
     paint(false);
     document.body.classList.add("is-ready");
+
+    Auth.start();
+    Store.subscribe(() => Auth.schedulePush());
 
     // needs http(s); opening index.html straight off the disk just skips it
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

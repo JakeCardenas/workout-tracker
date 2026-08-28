@@ -26,7 +26,7 @@
       href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@300..600&display=swap"
       rel="stylesheet"
     />
-    <link href="./css/style.css?v=16" rel="stylesheet" />
+    <link href="./css/style.css?v=17" rel="stylesheet" />
   </head>
   <body>
     <a class="skip-link" href="#view">Skip to content</a>
@@ -84,7 +84,10 @@
             <button class="ctl-btn ctl-btn--sound" type="button" data-sound-toggle aria-label="Toggle sound"></button>
             <button class="ctl-btn ctl-btn--unit mono" type="button" data-unit-toggle>KG</button>
           </div>
-          <button class="side-note mono" type="button" data-open-data>Saved on this device</button>
+          <button class="account mono" type="button" data-account data-open-account>Saved on this device</button>
+          <button class="side-note mono" type="button" data-open-data>
+            <span data-sync data-sync="saved">Synced</span>
+          </button>
         </div>
       </aside>
 
@@ -119,20 +122,23 @@
     <div class="toast" id="toast"></div>
     <div class="session" id="session"></div>
 
-    <script src="./js/data/exercises.js?v=16"></script>
-    <script src="./js/data/templates.js?v=16"></script>
-    <script src="./js/sound.js?v=16"></script>
-    <script src="./js/icons.js?v=16"></script>
-    <script src="./js/figures.js?v=16"></script>
-    <script src="./js/units.js?v=16"></script>
-    <script src="./js/plates.js?v=16"></script>
-    <script src="./js/backup.js?v=16"></script>
-    <script src="./js/store.js?v=16"></script>
-    <script src="./js/ui.js?v=16"></script>
-    <script src="./js/library.js?v=16"></script>
-    <script src="./js/builder.js?v=16"></script>
-    <script src="./js/session.js?v=16"></script>
-    <script src="./js/progress.js?v=16"></script>
-    <script src="./js/app.js?v=16"></script>
+    <script src="./js/data/exercises.js?v=17"></script>
+    <script src="./js/data/templates.js?v=17"></script>
+    <script src="./js/sound.js?v=17"></script>
+    <script src="./js/icons.js?v=17"></script>
+    <script src="./js/figures.js?v=17"></script>
+    <script src="./js/config.js?v=17"></script>
+    <script src="./js/api.js?v=17"></script>
+    <script src="./js/units.js?v=17"></script>
+    <script src="./js/plates.js?v=17"></script>
+    <script src="./js/backup.js?v=17"></script>
+    <script src="./js/store.js?v=17"></script>
+    <script src="./js/ui.js?v=17"></script>
+    <script src="./js/library.js?v=17"></script>
+    <script src="./js/builder.js?v=17"></script>
+    <script src="./js/session.js?v=17"></script>
+    <script src="./js/progress.js?v=17"></script>
+    <script src="./js/auth.js?v=17"></script>
+    <script src="./js/app.js?v=17"></script>
   </body>
 </html>

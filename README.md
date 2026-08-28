@@ -17,6 +17,29 @@ Then open http://localhost:4174
 Opening `index.html` directly works too — there are no image files to load and
 nothing is fetched at runtime.
 
+## Accounts and sync
+
+Optional, and off until you set it up. Without it the app behaves exactly as it
+always has — everything on the device, no network.
+
+1. Create a free project at supabase.com
+2. Run `db/schema.sql` in the SQL editor
+3. Settings → API, copy the Project URL and the `anon` key into `js/config.js`
+
+Then Sign in appears in the sidebar. Registration and login go straight to
+Supabase over HTTPS; passwords never touch this code beyond the input event.
+State pushes up about a second after any change and pulls down when you sign in
+on another device.
+
+Signing in on a device that already has workouts does not overwrite them
+silently — the local copy is stashed first and the toast offers to keep it
+instead, which then becomes the version in your account.
+
+The `anon` key belongs in client code; it only names the project. Every policy
+in the schema compares `auth.uid()` to `user_id`, so the key on its own reads
+nothing. Session tokens live in localStorage, which is the usual trade-off for
+a site with no server of its own.
+
 ## Installing it
 
 It is a proper PWA, so on a phone you can open it in the browser and use
@@ -36,12 +59,16 @@ or a returning visitor keeps the old shell.
     index.html              app shell, nav and script order
     sw.js                   offline precache
     tools/make-icons.py     writes the PNG icon set with no dependencies
+    db/schema.sql           one table, four row level security policies
     css/style.css           design tokens and all styling
     js/
       data/exercises.js     36 exercises: coaching notes, muscles, defaults
       data/templates.js     six starting workouts
       store.js              one localStorage document plus every mutation
       sound.js              synthesized cues for sets, rest and records
+      config.js             Supabase URL and anon key, blank by default
+      api.js                auth and REST over plain fetch, no SDK
+      auth.js               sign in, sign up, and background sync
       units.js              kg / lb conversion, one canonical unit
       plates.js             bar loading, warm-up ramps, 1RM estimate
       backup.js             export and restore the whole state as JSON
