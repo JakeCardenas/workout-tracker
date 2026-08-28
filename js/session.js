@@ -96,6 +96,8 @@ const Session = (() => {
             ${Stepper.markup({ name: "weight", value: Units.fromKg(set.weight), min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: ` ${Units.label()}`, wide: true })}
           </div>
 
+          ${Plates.usesBar(meta) ? `<div class="session-bar-load" data-bar>${Plates.strip(set.weight)}</div>` : ""}
+
           <button class="btn btn--primary btn--xl" type="button" data-complete>${Icons.get("check")} Complete Set</button>
           <button class="link-btn mono" type="button" data-skip-set>Skip this set</button>
 
@@ -116,6 +118,8 @@ const Session = (() => {
       ex.sets.forEach((x, i) => {
         if (i > live.setIndex && !x.done) x[e.detail.name] = value;
       });
+      const bar = root().querySelector("[data-bar]");
+      if (bar && e.detail.name === "weight") bar.innerHTML = Plates.strip(value);
     });
   }
 

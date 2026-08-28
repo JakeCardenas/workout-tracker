@@ -27,6 +27,8 @@ nothing is fetched at runtime.
       store.js              one localStorage document plus every mutation
       sound.js              synthesized cues for sets, rest and records
       units.js              kg / lb conversion, one canonical unit
+      plates.js             bar loading, warm-up ramps, 1RM estimate
+      backup.js             export and restore the whole state as JSON
       icons.js              icon set and the muscle map renderer
       figures.js            pose system that draws every exercise
       ui.js                 steppers, sheets, toasts, formatting
@@ -51,6 +53,19 @@ map** on top of that, with front and back views built from one part list.
 All state lives in a single localStorage key (`reps.state.v1`) behind
 `store.js`. Views never touch storage directly, so swapping in a real backend
 means rewriting `load` and `persist` and leaving everything else alone.
+
+For any barbell lift the config block shows what to actually load: the plates
+per side and the bar underneath it, recalculated as you tap the stepper. Open
+the warm-up ramp and it lays out the build to your working set. Workout mode
+carries the same strip, so the numbers are there while you are at the rack.
+
+Progress estimates a one-rep max with Epley, taken from the best real
+weight-and-rep pair in a session rather than pairing the heaviest weight with
+the highest reps from different sets.
+
+Backups are plain JSON. Export writes a dated file, import validates the shape
+before replacing anything, and a file that is not a backup is refused instead
+of quietly wiping your history.
 
 Weight is always stored in kilograms. `units.js` converts only at the edges —
 on the way into a stepper and on the way back out — so switching to pounds

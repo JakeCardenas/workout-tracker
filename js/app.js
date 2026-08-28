@@ -212,7 +212,7 @@ const App = (() => {
         <header class="detail-head">
           <div>
             <h2 class="detail-title">Your data</h2>
-            <p class="detail-meta mono">Everything stays in this browser. Nothing is uploaded.</p>
+            <p class="detail-meta mono">Everything stays in this browser. Back it up before you clear site data.</p>
           </div>
         </header>
         <dl class="data-rows">
@@ -223,10 +223,41 @@ const App = (() => {
           ${row("Storage used", `${(bytes / 1024).toFixed(1)} KB`)}
         </dl>
         <div class="confirm-actions">
-          <button class="btn btn--danger" type="button" data-reset-all>${Icons.get("trash")} Erase everything</button>
-          <button class="btn" type="button" data-close>Close</button>
-        </div>`,
+          <button class="btn btn--primary" type="button" data-export>${Icons.get("down")} Save a backup</button>
+          <button class="btn" type="button" data-import>${Icons.get("up")} Restore</button>
+          <button class="btn btn--danger" type="button" data-reset-all>${Icons.get("trash")} Erase</button>
+        </div>
+        <input type="file" accept="application/json,.json" hidden data-file />`,
       onMount(scope) {
+        const file = scope.querySelector("[data-file]");
+
+        scope.querySelector("[data-export]").addEventListener("click", () => {
+          Backup.download();
+          Toast.show("Backup saved to your downloads");
+        });
+
+        scope.querySelector("[data-import]").addEventListener("click", () => file.click());
+
+        file.addEventListener("change", async () => {
+          const chosen = file.files[0];
+          if (!chosen) return;
+          try {
+            const next = await Backup.read(chosen);
+            const count = Backup.summarise(next);
+            Store.replace(next);
+            Units.set(Store.state.settings.unit);
+            applyTheme(Store.state.settings.theme);
+            syncUnitButtons();
+            Sheet.close();
+            Sound.play("set");
+            repaint();
+            Toast.show(`Restored ${count.history} workouts and ${count.workouts} saved routines`);
+          } catch (err) {
+            Toast.show(err.message || "That backup could not be read");
+          }
+          file.value = "";
+        });
+
         scope.querySelector("[data-reset-all]").addEventListener("click", () => {
           Store.reset();
           Units.set(Store.state.settings.unit);

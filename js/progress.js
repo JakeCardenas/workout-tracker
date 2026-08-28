@@ -170,6 +170,7 @@ const ProgressView = (() => {
     const prior = points.length > 1 ? points[points.length - 2] : null;
     const delta = prior ? latest.weight - prior.weight : 0;
     const volume = points.reduce((t, p) => t + p.volume, 0);
+    const peak = Math.max(...points.map((p) => p.e1rm || 0));
 
     return `
       <article class="prog-row" data-ex="${exId}" tabindex="0" role="button">
@@ -193,6 +194,9 @@ const ProgressView = (() => {
         <dl class="prog-best mono">
           <div><dt>Best</dt><dd>${rec && rec.bestWeight ? Fmt.weight(rec.bestWeight, meta.unit) : "—"}</dd></div>
           <div><dt>Top ${meta.unit === "sec" ? "hold" : "reps"}</dt><dd>${rec ? rec.bestReps : "—"}</dd></div>
+          ${peak && meta.unit !== "sec" && meta.equipment !== "Bodyweight"
+            ? `<div><dt>Est. 1RM</dt><dd>${Fmt.weight(peak, meta.unit)}</dd></div>`
+            : ""}
           <div><dt>Volume</dt><dd>${Fmt.volume(volume)}</dd></div>
         </dl>
       </article>`;

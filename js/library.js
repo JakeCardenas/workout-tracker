@@ -120,10 +120,25 @@ const ExerciseSheet = (() => {
           ${Stepper.markup({ name: "weight", value: Units.fromKg(cfg.weight), min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: ` ${Units.label()}` })}
         </div>
         ${RestPicker.markup(cfg.rest)}
+        ${Plates.usesBar(ex) ? `<div data-bar>${barBlock(ex, cfg)}</div>` : ""}
         <button class="btn btn--primary btn--block" type="button" data-add="${ex.id}">
           ${Icons.get("plus")} Add to Workout
         </button>
       </section>`;
+  }
+
+  function barBlock(ex, cfg) {
+    const warm = Plates.warmup(cfg.weight, cfg.reps);
+    return `
+      ${Plates.strip(cfg.weight)}
+      ${warm.length
+        ? `<details class="warmup">
+            <summary class="mono">Warm-up ramp</summary>
+            <ol class="warmup-list mono">
+              ${warm.map((r) => `<li><span>${Fmt.weight(Units.toKg(r.weight), ex.unit)}</span><span>${r.reps} reps</span></li>`).join("")}
+            </ol>
+          </details>`
+        : ""}`;
   }
 
   function open(exId) {
@@ -151,8 +166,14 @@ const ExerciseSheet = (() => {
           rest: +config.querySelector("[data-rest-picker]").dataset.value,
         });
 
-        config.addEventListener("stepper", () => Store.setConfig(ex.id, readConfig()));
-        config.addEventListener("restchange", () => Store.setConfig(ex.id, readConfig()));
+        const bar = config.querySelector("[data-bar]");
+        const sync = () => {
+          const next = readConfig();
+          Store.setConfig(ex.id, next);
+          if (bar) bar.innerHTML = barBlock(ex, next);
+        };
+        config.addEventListener("stepper", sync);
+        config.addEventListener("restchange", sync);
 
         scope.querySelector("[data-add]").addEventListener("click", () => {
           const count = Store.addToDraft(ex.id, readConfig());

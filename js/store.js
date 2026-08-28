@@ -278,10 +278,15 @@ const Store = (() => {
       if (!found) continue;
       const done = found.sets.filter((s) => s.done);
       if (!done.length) continue;
+      const top = done.reduce((a, b) =>
+        Plates.oneRepMax(b.weight, b.reps) > Plates.oneRepMax(a.weight, a.reps) ? b : a,
+      );
       points.push({
         at: session.endedAt,
         weight: Math.max(...done.map((s) => s.weight)),
         reps: Math.max(...done.map((s) => s.reps)),
+        best: { weight: top.weight, reps: top.reps },
+        e1rm: Plates.oneRepMax(top.weight, top.reps),
         volume: done.reduce((t, s) => t + s.reps * s.weight, 0),
       });
     }
@@ -291,6 +296,14 @@ const Store = (() => {
   function setSetting(key, value) {
     state.settings[key] = value;
     commit("settings");
+  }
+
+  function replace(next) {
+    state = Object.assign(blank(), next, {
+      settings: Object.assign(blank().settings, next.settings || {}),
+      draft: Object.assign(blank().draft, next.draft || {}),
+    });
+    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent");
   }
 
   function reset() {
@@ -338,6 +351,7 @@ const Store = (() => {
     lastPerformance,
     historyFor,
     setSetting,
+    replace,
     reset,
   };
 })();

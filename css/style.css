@@ -1484,6 +1484,85 @@ svg {
   font-size: 1.75rem;
 }
 
+.plates {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.plate-row {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+.plate-chip {
+  min-width: 2.1rem;
+  padding: 0.24rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  font-size: 0.72rem;
+  text-align: center;
+}
+.plate-chip.is-empty {
+  border-style: dashed;
+  color: var(--fg-faint);
+}
+.plate-note {
+  font-size: 0.63rem;
+  color: var(--fg-faint);
+}
+
+.warmup {
+  margin-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+}
+.warmup summary {
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  cursor: pointer;
+  list-style: none;
+}
+.warmup summary::-webkit-details-marker {
+  display: none;
+}
+.warmup summary::before {
+  content: "+ ";
+}
+.warmup[open] summary::before {
+  content: "− ";
+}
+.warmup summary:hover {
+  color: var(--fg-dim);
+}
+.warmup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.7rem;
+  font-size: 0.76rem;
+  color: var(--fg-muted);
+}
+.warmup-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.warmup-list li span:last-child {
+  color: var(--fg-faint);
+}
+
+.session-bar-load {
+  width: 100%;
+  margin-bottom: 1.1rem;
+}
+.session-bar-load .plates {
+  justify-content: center;
+}
+
 .rest-row {
   display: flex;
   align-items: center;
