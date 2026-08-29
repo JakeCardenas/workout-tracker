@@ -1,6 +1,9 @@
 const Splash = (() => {
   let done = false;
   let timer = null;
+  let gestures = null;
+
+  const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const root = () => document.getElementById("splash");
 
@@ -33,6 +36,7 @@ const Splash = (() => {
     if (done) return;
     done = true;
     clearTimeout(timer);
+    if (gestures) gestures.abort();
     const el = root();
     el.classList.add("is-leaving");
     document.body.classList.remove("is-splashing");
@@ -42,14 +46,7 @@ const Splash = (() => {
     }, 420);
   }
 
-  // Plays on every launch, not once per session: opening the app is the moment
-  // the intro is for, and a reload is an open. Anyone in a hurry can skip it.
-  function shouldPlay() {
-    return !matchMedia("(prefers-reduced-motion: reduce)").matches;
-  }
-
   function play() {
-    if (!shouldPlay()) return false;
     const el = root();
     if (el.classList.contains("is-on")) return false;
     done = false;
@@ -58,13 +55,25 @@ const Splash = (() => {
     el.innerHTML = markup();
     el.classList.add("is-on");
     document.body.classList.add("is-splashing");
+
+    // a phone stays silent until it has been touched, so the cue is tried now
+    // and again on that first touch, whenever it comes
+    Sound.armLaunch();
     Sound.launch();
 
-    const skip = () => finish();
-    el.addEventListener("click", skip, { once: true });
-    window.addEventListener("keydown", skip, { once: true });
+    gestures = new AbortController();
+    const opts = { passive: true, signal: gestures.signal };
+    ["pointerdown", "touchstart", "keydown"].forEach((evt) =>
+      window.addEventListener(evt, () => Sound.launch(), opts),
+    );
 
-    timer = setTimeout(finish, 2800);
+    // only Skip and Escape end it early — a stray tap should not cost the intro
+    el.querySelector("[data-splash-skip]").addEventListener("click", finish);
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") finish();
+    }, { signal: gestures.signal });
+
+    timer = setTimeout(finish, calm() ? 1500 : 2800);
     return true;
   }
 

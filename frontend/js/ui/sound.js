@@ -136,21 +136,41 @@ const Sound = (() => {
     localStorage.setItem("reps.sound", v ? "true" : "false");
   }
 
-  // The intro runs before any gesture, so the usual unlock gate would mute it.
-  // If the browser will not start audio without one, it simply stays quiet.
+  let launched = false;
+  let launchUntil = 0;
+
+  // The intro runs before any gesture, and a phone will not make a sound until
+  // the screen has been touched. So this gets called twice: once when the intro
+  // starts, and again on the first touch. Whichever attempt the browser allows
+  // through is the only one that sounds, and neither fires after the intro ends.
   function launch() {
-    if (!enabled || !ensure()) return;
-    const deadline = performance.now() + 2500;
-    const go = () => {
-      if (ctx.state === "running" && performance.now() < deadline) cues.launch();
-    };
-    if (ctx.state === "running") go();
-    else ctx.resume().then(go, () => {});
+    if (!enabled || launched || !ensure()) return false;
+    if (!launchUntil) launchUntil = performance.now() + 4000;
+    if (performance.now() > launchUntil) return false;
+
+    if (ctx.state === "running") {
+      launched = true;
+      cues.launch();
+      return true;
+    }
+    ctx.resume().then(() => {
+      if (launched || ctx.state !== "running") return;
+      if (performance.now() > launchUntil) return;
+      launched = true;
+      cues.launch();
+    }, () => {});
+    return false;
+  }
+
+  function armLaunch() {
+    launched = false;
+    launchUntil = 0;
   }
 
   return {
     play,
     launch,
+    armLaunch,
     restore: remember,
     setEnabled(v) {
       remember(v);

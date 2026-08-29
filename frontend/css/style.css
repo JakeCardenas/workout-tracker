@@ -3631,6 +3631,16 @@ body.is-splashing .tabbar {
   .splash-flash {
     opacity: 0;
   }
+  /* the intro still runs, it just stops moving: a plain fade in and out */
+  .splash.is-leaving {
+    animation: splashFade 0.3s var(--ease) forwards;
+  }
+  body.is-splashing .shell {
+    transform: none;
+  }
+}
+@keyframes splashFade {
+  to { opacity: 0; visibility: hidden; }
 }
 
 .brand {
