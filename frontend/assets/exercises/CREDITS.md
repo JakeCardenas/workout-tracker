@@ -1,6 +1,6 @@
 # Exercise illustrations
 
-The 192 SVG frames in this folder (64 exercises, three frames each) are not my
+The 330 SVG frames in this folder (110 exercises, three frames each) are not my
 work. They come from the Workout Guide asset library by **Bryl Lim**:
 
 - Source: https://github.com/bryllim/workout-guide

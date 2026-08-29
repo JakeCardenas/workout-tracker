@@ -6,11 +6,20 @@ const Art = (() => {
   // lazy loading, so an observer holds them back until the card is near view.
   function render(exId, extraClass = "") {
     const ex = EXERCISE_BY_ID[exId];
-    if (!ex || !ex.art) return "";
+    if (!ex) return "";
+    if (!ex.art) return blank(ex, extraClass);
     const layers = FRAMES.map(
       (n) => `<span class="art-frame" data-src="assets/exercises/${ex.art}/${n}.svg"></span>`,
     ).join("");
     return `<figure class="art is-idle ${extraClass}" role="img" aria-label="${esc(ex.name)}">${layers}</figure>`;
+  }
+
+  // A handful of movements have no drawing yet. An equipment glyph keeps the
+  // card the same shape and weight instead of leaving a hole in the grid.
+  function blank(ex, extraClass) {
+    return `<figure class="art art-blank ${extraClass}" role="img" aria-label="${esc(ex.name)}">
+      ${Icons.equipment(ex.equipment) || ""}
+    </figure>`;
   }
 
   function paint(figure) {
