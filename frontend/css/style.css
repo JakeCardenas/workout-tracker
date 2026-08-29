@@ -4139,3 +4139,26 @@ body.is-splashing .tabbar {
     min-height: 34px;
   }
 }
+
+.credits {
+  margin-top: 0.75rem;
+}
+.credits summary {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  cursor: pointer;
+  list-style: none;
+}
+.credits summary::-webkit-details-marker {
+  display: none;
+}
+.credits summary:hover {
+  color: var(--fg-dim);
+}
+.credits .set-foot {
+  padding-top: 0.6rem;
+  max-width: 44ch;
+  margin: 0 auto;
+}

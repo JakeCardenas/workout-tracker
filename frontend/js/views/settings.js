@@ -107,11 +107,14 @@ const SettingsView = (() => {
           <div><dt>Running as</dt><dd>${installed ? "Installed app" : "Web"}</dd></div>
         </dl>
         <p class="about-by mono">Made by Jake Cardenas</p>
-        <p class="set-foot mono">Exercise illustrations by
-          <a href="https://github.com/bryllim/workout-guide" target="_blank" rel="noopener">Bryl Lim</a> ·
-          <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>,
-          recoloured for this app.
-        </p>
+        <details class="credits">
+          <summary class="mono">Credits</summary>
+          <p class="set-foot mono">Exercise illustrations by
+            <a href="https://github.com/bryllim/workout-guide" target="_blank" rel="noopener">Bryl Lim</a>,
+            used under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+            and recoloured for this app.
+          </p>
+        </details>
       </section>`;
   }
 
