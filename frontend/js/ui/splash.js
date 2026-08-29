@@ -1,5 +1,5 @@
 const Splash = (() => {
-    let done = false;
+  let done = false;
   let timer = null;
 
   const root = () => document.getElementById("splash");
@@ -51,6 +51,10 @@ const Splash = (() => {
   function play() {
     if (!shouldPlay()) return false;
     const el = root();
+    if (el.classList.contains("is-on")) return false;
+    done = false;
+    clearTimeout(timer);
+    el.classList.remove("is-leaving");
     el.innerHTML = markup();
     el.classList.add("is-on");
     document.body.classList.add("is-splashing");
@@ -63,6 +67,29 @@ const Splash = (() => {
     timer = setTimeout(finish, 2800);
     return true;
   }
+
+  // An installed app is resumed, not reloaded. Tapping the home-screen icon
+  // brings back the page that was already open, so DOMContentLoaded never fires
+  // a second time and the intro would play once, on the day it was installed.
+  // A long spell in the background counts as an open instead.
+  const AWAY = 45000;
+  let hiddenAt = 0;
+
+  const busy = () => Boolean(document.querySelector(".session.is-on, .sheet.is-open"));
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      hiddenAt = Date.now();
+      return;
+    }
+    if (!hiddenAt || Date.now() - hiddenAt < AWAY) return;
+    hiddenAt = 0;
+    if (!busy()) play();
+  });
+
+  window.addEventListener("pageshow", (e) => {
+    if (e.persisted && !busy()) play();
+  });
 
   return { play, finish, get isPlaying() { return root().classList.contains("is-on"); } };
 })();

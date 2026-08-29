@@ -99,8 +99,15 @@ const Shell = (() => {
     watchConnection();
     if (!("serviceWorker" in navigator) || !location.protocol.startsWith("http")) return;
     navigator.serviceWorker
-      .register("./sw.js")
-      .then(watchUpdates)
+      .register("./sw.js", { updateViaCache: "none" })
+      .then((reg) => {
+        watchUpdates(reg);
+        // an installed app can sit suspended for weeks without ever asking
+        // whether there is a newer build, so every return to the foreground does
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) reg.update().catch(() => {});
+        });
+      })
       .catch(() => {});
   }
 

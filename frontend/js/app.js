@@ -346,13 +346,6 @@ const App = (() => {
     document.body.classList.add("is-ready");
     syncShell();
     setTimeout(offerResume, Splash.isPlaying ? 2400 : 0);
-
-
-
-    // needs http(s); opening index.html straight off the disk just skips it
-    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
-    }
   }
 
   return { boot, paint, repaint, syncSoundButtons, syncUnitButtons, syncBadges };
