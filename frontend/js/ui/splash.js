@@ -10,15 +10,18 @@ const Splash = (() => {
   function markup() {
     return `
       <div class="splash-inner">
+        <span class="splash-sheen"></span>
         <div class="splash-badge">
           <span class="splash-ring"></span>
           <span class="splash-ring is-late"></span>
+          <span class="splash-flash"></span>
           <img class="splash-logo" src="./assets/brand/logo.svg" width="96" height="96" alt="" />
         </div>
         <h1 class="splash-title">
           <span class="splash-lead">Welcome to</span>
           <span class="splash-word">${LETTERS}</span>
         </h1>
+        <span class="splash-rule"></span>
         <p class="splash-tag">${WORDS}</p>
         <div class="splash-bar"><i></i></div>
         <p class="splash-by mono">Made by Jake Cardenas</p>
@@ -51,6 +54,7 @@ const Splash = (() => {
     el.innerHTML = markup();
     el.classList.add("is-on");
     document.body.classList.add("is-splashing");
+    Sound.launch();
 
     const skip = () => finish();
     el.addEventListener("click", skip, { once: true });

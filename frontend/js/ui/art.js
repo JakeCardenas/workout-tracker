@@ -11,7 +11,10 @@ const Art = (() => {
     const layers = FRAMES.map(
       (n) => `<span class="art-frame" data-src="assets/exercises/${ex.art}/${n}.svg"></span>`,
     ).join("");
-    return `<figure class="art is-idle ${extraClass}" role="img" aria-label="${esc(ex.name)}">${layers}</figure>`;
+    // a couple of movements borrow the drawing of their closest cousin; mirroring
+    // them keeps the page from looking like the same figure twice
+    const flip = ex.artFlip ? " is-flipped" : "";
+    return `<figure class="art is-idle${flip} ${extraClass}" role="img" aria-label="${esc(ex.name)}">${layers}</figure>`;
   }
 
   // A handful of movements have no drawing yet. An equipment glyph keeps the

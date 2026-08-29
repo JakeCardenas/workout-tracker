@@ -114,6 +114,15 @@ const Sound = (() => {
     },
 
     remove: () => note(392, { gain: 0.032, hold: 0.02, fade: 0.12 }),
+
+    // the opening: a low landing, an open fifth, then one bright tail
+    launch() {
+      note(146.83, { gain: 0.05, at: 0.1, hold: 0.05, fade: 0.5, type: "triangle" });
+      note(293.66, { gain: 0.034, at: 0.84, hold: 0.07, fade: 0.5 });
+      note(440, { gain: 0.028, at: 0.92, hold: 0.07, fade: 0.55 });
+      note(587.33, { gain: 0.03, at: 1.28, hold: 0.06, fade: 0.6 });
+      note(880, { gain: 0.018, at: 1.4, hold: 0.06, fade: 0.8 });
+    },
   };
 
   function play(name) {
@@ -127,8 +136,21 @@ const Sound = (() => {
     localStorage.setItem("reps.sound", v ? "true" : "false");
   }
 
+  // The intro runs before any gesture, so the usual unlock gate would mute it.
+  // If the browser will not start audio without one, it simply stays quiet.
+  function launch() {
+    if (!enabled || !ensure()) return;
+    const deadline = performance.now() + 2500;
+    const go = () => {
+      if (ctx.state === "running" && performance.now() < deadline) cues.launch();
+    };
+    if (ctx.state === "running") go();
+    else ctx.resume().then(go, () => {});
+  }
+
   return {
     play,
+    launch,
     restore: remember,
     setEnabled(v) {
       remember(v);

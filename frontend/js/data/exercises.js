@@ -2412,7 +2412,7 @@ const EXERCISES = [
   },
 
   {
-    id: "bayesian-curl", name: "Bayesian Curl",
+    id: "bayesian-curl", art: "cable-curl", artFlip: true, name: "Bayesian Curl",
     group: "Arms", equipment: "Cable", level: "Intermediate", view: "front",
     primary: ["biceps"], secondary: ["forearms"],
     summary: "A one-arm cable curl done facing away from the stack, so the arm starts behind the body and the long head of the biceps is loaded at full stretch.",
@@ -2427,7 +2427,7 @@ const EXERCISES = [
     defaults: { sets: 3, reps: 12, weight: 10, rest: 75 },
   },
   {
-    id: "jm-press", name: "JM Press",
+    id: "jm-press", art: "skull-crusher", artFlip: true, name: "JM Press",
     group: "Arms", equipment: "Barbell", level: "Advanced", view: "front",
     primary: ["triceps"], secondary: ["chest", "front-delts"],
     summary: "Half close-grip bench, half skull crusher. The bar tracks toward the throat with the elbows tucked, which loads the triceps heavily while staying pressable.",
