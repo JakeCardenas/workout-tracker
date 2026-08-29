@@ -1,17 +1,70 @@
 function estimateDuration(items) {
   const seconds = items.reduce((total, i) => {
     const timed = EXERCISE_BY_ID[i.exId].unit === "sec";
-    const working = timed ? i.reps : i.reps * 3;
-    return total + i.sets * (working + i.rest);
+    return (
+      total +
+      Store.setsOf(i).reduce((t, row) => t + (timed ? row.reps : row.reps * 3) + i.rest, 0)
+    );
   }, 0);
   return seconds * 1000;
 }
 
+// "3 × 10 · 40 kg" when every set matches, otherwise the varied breakdown
+function describeSets(item, ex) {
+  const rows = Store.setsOf(item);
+  const uniform = rows.every((r) => r.reps === rows[0].reps && r.weight === rows[0].weight);
+  if (uniform) {
+    return `${rows.length} × ${rows[0].reps}${ex.unit === "sec" ? "s" : ""} · ${Fmt.weight(rows[0].weight, ex.unit)}`;
+  }
+  const sameWeight = rows.every((r) => r.weight === rows[0].weight);
+  const reps = rows.map((r) => r.reps).join("/");
+  return sameWeight
+    ? `${reps} · ${Fmt.weight(rows[0].weight, ex.unit)}`
+    : rows.map((r) => `${r.reps}×${Units.fromKg(r.weight)}`).join(" · ");
+}
+
 function draftTotals(items) {
-  const sets = items.reduce((t, i) => t + i.sets, 0);
-  const reps = items.reduce((t, i) => t + i.sets * i.reps, 0);
-  const volume = items.reduce((t, i) => t + i.sets * i.reps * i.weight, 0);
+  let sets = 0;
+  let reps = 0;
+  let volume = 0;
+  items.forEach((i) => {
+    Store.setsOf(i).forEach((row) => {
+      sets += 1;
+      reps += row.reps;
+      volume += row.reps * row.weight;
+    });
+  });
   return { sets, reps, volume, duration: estimateDuration(items) };
+}
+
+function setTableMarkup(item) {
+  const ex = EXERCISE_BY_ID[item.exId];
+  const rows = Store.setsOf(item);
+  const unit = ex.unit === "sec" ? "sec" : Units.label();
+  return `
+    <div class="set-table" data-set-table>
+      <div class="set-head mono">
+        <span>Set</span><span>${ex.unit === "sec" ? "Seconds" : "Weight (" + unit + ")"}</span><span>${ex.unit === "sec" ? "Rounds" : "Reps"}</span><span></span>
+      </div>
+      ${rows
+        .map(
+          (r, i) => `
+        <div class="set-line" data-set-line="${i}">
+          <span class="set-n mono">${i + 1}</span>
+          <input class="text-input set-in" type="number" inputmode="decimal" min="0" step="0.5"
+                 value="${Units.fromKg(r.weight)}" data-set-weight aria-label="Set ${i + 1} weight" />
+          <input class="text-input set-in" type="number" inputmode="numeric" min="1"
+                 value="${r.reps}" data-set-reps aria-label="Set ${i + 1} reps" />
+          <button class="icon-btn icon-btn--danger" type="button" data-drop-set="${i}"
+                  aria-label="Remove set ${i + 1}" ${rows.length < 2 ? "disabled" : ""}>${Icons.get("trash")}</button>
+        </div>`,
+        )
+        .join("")}
+      <div class="set-tools">
+        <button class="btn btn--sm" type="button" data-add-set>${Icons.get("plus")} Add set</button>
+        <button class="btn btn--sm" type="button" data-copy-first>Copy set 1 down</button>
+      </div>
+    </div>`;
 }
 
 function openItemEditor(item, onSave) {
@@ -33,17 +86,76 @@ function openItemEditor(item, onSave) {
           ${Stepper.markup({ name: "weight", value: Units.fromKg(item.weight), min: 0, max: s.weightMax, step: s.weightStep, label: s.weightLabel, suffix: ` ${Units.label()}` })}
         </div>
         ${RestPicker.markup(item.rest)}
+      </section>
+
+      <section class="detail-section">
+        <h3 class="section-label mono">Each set</h3>
+        <div data-table-host>${setTableMarkup(item)}</div>
         <button class="btn btn--primary btn--block" type="button" data-save>${Icons.get("check")} Save changes</button>
       </section>`,
     onMount(scope) {
+      const host = scope.querySelector("[data-table-host]");
+      const config = scope.querySelector("[data-config]");
+      let rows = Store.setsOf(item);
+
+      const redraw = () => {
+        host.innerHTML = setTableMarkup(Object.assign({}, item, { sets: rows.length, plan: rows }));
+      };
+
+      const readRows = () =>
+        [...host.querySelectorAll("[data-set-line]")].map((line) => ({
+          weight: Units.toKg(Number(line.querySelector("[data-set-weight]").value) || 0),
+          reps: Math.max(1, Number(line.querySelector("[data-set-reps]").value) || 1),
+        }));
+
+      // the steppers set the shape of the work, so they reshape the table too
+      config.addEventListener("stepper", (e) => {
+        rows = readRows();
+        if (e.detail.name === "sets") {
+          const want = e.detail.value;
+          while (rows.length < want) rows.push(Object.assign({}, rows[rows.length - 1] || { reps: 10, weight: 0 }));
+          rows.length = want;
+        } else {
+          const key = e.detail.name === "weight" ? "weight" : "reps";
+          const value = key === "weight" ? Units.toKg(e.detail.value) : e.detail.value;
+          rows = rows.map((r) => Object.assign({}, r, { [key]: value }));
+        }
+        redraw();
+      });
+
+      host.addEventListener("click", (e) => {
+        const drop = e.target.closest("[data-drop-set]");
+        if (drop) {
+          rows = readRows();
+          rows.splice(+drop.dataset.dropSet, 1);
+          Sound.play("remove");
+          return redraw();
+        }
+        if (e.target.closest("[data-add-set]")) {
+          rows = readRows();
+          rows.push(Object.assign({}, rows[rows.length - 1] || { reps: 10, weight: 0 }));
+          Sound.play("step");
+          return redraw();
+        }
+        if (e.target.closest("[data-copy-first]")) {
+          rows = readRows();
+          const first = rows[0];
+          rows = rows.map(() => Object.assign({}, first));
+          Sound.play("step");
+          return redraw();
+        }
+      });
+
       scope.querySelector("[data-save]").addEventListener("click", () => {
-        const config = scope.querySelector("[data-config]");
+        const finalRows = readRows();
         onSave({
-          sets: Stepper.read(config, "sets"),
-          reps: Stepper.read(config, "reps"),
-          weight: Units.toKg(Stepper.read(config, "weight")),
+          sets: finalRows.length,
+          reps: finalRows[0].reps,
+          weight: finalRows[0].weight,
+          plan: finalRows,
           rest: +config.querySelector("[data-rest-picker]").dataset.value,
         });
+        Sound.play("tap");
         Sheet.close();
       });
     },
@@ -58,7 +170,7 @@ const BuildView = (() => {
         <span class="build-index mono">${String(index + 1).padStart(2, "0")}</span>
         <div class="build-main">
           <h3 class="build-name">${esc(ex.name)}</h3>
-          <p class="build-sum mono">${item.sets} × ${item.reps}${ex.unit === "sec" ? "s" : ""} · ${Fmt.weight(item.weight, ex.unit)} · ${item.rest}s rest</p>
+          <p class="build-sum mono">${describeSets(item, ex)} · ${item.rest}s rest</p>
         </div>
         <div class="build-tools">
           <button class="icon-btn" type="button" data-move="-1" ${index === 0 ? "disabled" : ""} aria-label="Move up">${Icons.get("up")}</button>
@@ -126,6 +238,31 @@ const BuildView = (() => {
       </article>`;
   }
 
+  function summaryRail(items) {
+    const totals = draftTotals(items);
+    const groups = [];
+    items.forEach((i) => {
+      const g = EXERCISE_BY_ID[i.exId].group;
+      if (!groups.includes(g)) groups.push(g);
+    });
+    return `
+      <aside class="build-summary">
+        <h3 class="section-label mono">Summary</h3>
+        <dl class="summary-list mono">
+          <div><dt>Exercises</dt><dd>${items.length}</dd></div>
+          <div><dt>Sets</dt><dd>${totals.sets}</dd></div>
+          <div><dt>Reps</dt><dd>${totals.reps}</dd></div>
+          <div><dt>Volume</dt><dd>${totals.volume ? Fmt.volume(totals.volume) : "—"}</dd></div>
+          <div><dt>Time</dt><dd>~${Fmt.duration(totals.duration)}</dd></div>
+        </dl>
+        <div class="summary-groups">
+          <span class="field-label mono">Targets</span>
+          <div class="chips">${groups.map((g) => `<span class="chip mono is-static">${g}</span>`).join("")}</div>
+        </div>
+        <button class="btn btn--primary btn--block" type="button" data-start>${Icons.get("play")} Start workout</button>
+      </aside>`;
+  }
+
   function render() {
     const draft = Store.state.draft;
     const items = draft.items;
@@ -140,7 +277,7 @@ const BuildView = (() => {
         </div>
       </div>
 
-      <section class="builder">
+      <section class="builder" data-builder>
         <div class="builder-head">
           <input class="name-input" type="text" data-name placeholder="Name this workout"
                  value="${esc(draft.name)}" aria-label="Workout name" maxlength="40" />
@@ -152,18 +289,20 @@ const BuildView = (() => {
           </dl>` : ""}
         </div>
 
+        ${items.length ? summaryRail(items) : ""}
         ${items.length
           ? `<ol class="build-list" data-list>${items.map((i, n) => itemRow(i, n, items.length)).join("")}</ol>
              <div class="builder-actions">
                <button class="btn btn--primary btn--lg" type="button" data-start>${Icons.get("play")} Start Workout</button>
                <button class="btn" type="button" data-save-workout>${Icons.get("check")} ${draft.savedId ? "Update" : "Save"} workout</button>
-               <a class="btn" href="#/library">${Icons.get("plus")} Add exercise</a>
+               <button class="btn" type="button" data-open-picker>${Icons.get("plus")} Add exercise</button>
                <button class="link-btn mono" type="button" data-clear-draft>Clear</button>
              </div>`
           : `<div class="empty empty--builder">
                <p class="empty-title">Your workout is empty</p>
                <p class="empty-sub">Add exercises from the library, or start from a template below.</p>
-               <a class="btn btn--primary" href="#/library">${Icons.get("library")} Browse exercises</a>
+               <button class="btn btn--primary" type="button" data-open-picker>${Icons.get("plus")} Add your first exercise</button>
+               <a class="btn" href="#/library">${Icons.get("library")} Browse library</a>
              </div>`}
       </section>
 
@@ -185,9 +324,10 @@ const BuildView = (() => {
   function loadDay(key) {
     const plan = DAY_PLANS[key];
     if (!plan) return;
+    const adapted = Coach.adaptDay(key, Store.state.profile);
     Store.clearDraft();
     Store.setDraftName(plan.name);
-    plan.exercises.forEach((id) => Store.addToDraft(id));
+    adapted.exercises.forEach((x) => Store.addToDraft(x.id));
     Sound.play("set");
     App.repaint();
     Toast.show(`${plan.name} loaded — change anything you like`);
@@ -211,12 +351,15 @@ const BuildView = (() => {
             .map((key, i) => {
               const plan = key ? DAY_PLANS[key] : null;
               if (!plan) return `<li class="split-day-row is-rest"><span class="split-day">${WEEK[i]}</span><span>Rest</span></li>`;
+              const adapted = Coach.adaptDay(key, Store.state.profile);
+              const swaps = adapted.exercises.filter((x) => x.swappedFrom).length;
               return `<li class="split-day-row">
                 <span class="split-day">${WEEK[i]}</span>
                 <div class="split-day-main">
                   <strong>${plan.name}</strong>
                   <span class="mono">${plan.focus}</span>
-                  <span class="mono split-list">${plan.exercises.map((e) => esc(EXERCISE_BY_ID[e].name)).join(" · ")}</span>
+                  <span class="mono split-list">${adapted.exercises.map((x) => esc(EXERCISE_BY_ID[x.id].name)).join(" · ")}</span>
+                  ${swaps ? `<span class="mono swap-note">${swaps} swapped for your equipment</span>` : ""}
                 </div>
                 <button class="btn btn--sm" type="button" data-load-day="${key}">Load</button>
               </li>`;
@@ -344,6 +487,14 @@ const BuildView = (() => {
 
       const planSplit = e.target.closest("[data-plan-split]");
       if (planSplit) return applySplit(planSplit.dataset.planSplit);
+
+      if (e.target.closest("[data-open-picker]")) {
+        return Picker.open((exId) => {
+          const n = Store.addToDraft(exId);
+          App.repaint();
+          Toast.show(`${EXERCISE_BY_ID[exId].name} added — ${n} in this workout`);
+        });
+      }
 
       if (e.target.closest("[data-start]")) return Workout.start(Store.state.draft);
 

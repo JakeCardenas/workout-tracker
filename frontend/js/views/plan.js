@@ -179,7 +179,7 @@ const PlanView = (() => {
       if (!day) return;
       Store.clearDraft();
       Store.setDraftName(day.name);
-      day.exercises.forEach((e) => Store.addToDraft(e));
+      Coach.adaptDay(id, Store.state.profile).exercises.forEach((x) => Store.addToDraft(x.id));
     }
     Workout.start(Store.state.draft);
   }

@@ -1,77 +1,4 @@
 const YouView = (() => {
-  const GOALS = ["Build muscle", "Get stronger", "Stay in shape"];
-
-  const cmToFtIn = (cm) => {
-    const total = Math.round(cm / 2.54);
-    return { ft: Math.floor(total / 12), inch: total % 12 };
-  };
-
-  function form(p) {
-    const lb = Units.isLb();
-    const h = p && p.heightCm ? (lb ? cmToFtIn(p.heightCm) : { cm: Math.round(p.heightCm) }) : null;
-    const shownWeight = p && p.weightKg ? Units.fromKg(p.weightKg) : "";
-
-    return `
-      <div class="you-grid">
-        <label class="field">
-          <span class="field-label mono">Age</span>
-          <input class="text-input" type="number" name="age" min="13" max="99"
-                 placeholder="e.g. 21" value="${p && p.age ? p.age : ""}" />
-        </label>
-
-        ${lb
-          ? `<label class="field">
-               <span class="field-label mono">Height</span>
-               <span class="split-input">
-                 <input class="text-input" type="number" name="ft" min="3" max="8" placeholder="ft" value="${h ? h.ft : ""}" />
-                 <input class="text-input" type="number" name="inch" min="0" max="11" placeholder="in" value="${h ? h.inch : ""}" />
-               </span>
-             </label>`
-          : `<label class="field">
-               <span class="field-label mono">Height (cm)</span>
-               <input class="text-input" type="number" name="cm" min="120" max="230"
-                      placeholder="e.g. 170" value="${h ? h.cm : ""}" />
-             </label>`}
-
-        <label class="field">
-          <span class="field-label mono">Weight (${Units.label()})</span>
-          <input class="text-input" type="number" name="weight" min="30" max="400" step="0.5"
-                 placeholder="e.g. ${lb ? 155 : 70}" value="${shownWeight}" />
-        </label>
-
-        <label class="field">
-          <span class="field-label mono">Experience</span>
-          <select class="text-input" name="experience">
-            <option value="">Choose…</option>
-            ${Coach.LEVELS.map((l) => `<option value="${l}"${p && p.experience === l ? " selected" : ""}>${l}</option>`).join("")}
-          </select>
-        </label>
-
-        <label class="field">
-          <span class="field-label mono">Days a week you can train</span>
-          <select class="text-input" name="days">
-            <option value="">Choose…</option>
-            ${[2, 3, 4, 5, 6].map((d) => `<option value="${d}"${p && p.days === d ? " selected" : ""}>${d} days</option>`).join("")}
-          </select>
-        </label>
-
-        <label class="field">
-          <span class="field-label mono">Goal</span>
-          <select class="text-input" name="goal">
-            ${GOALS.map((g) => `<option value="${g}"${p && p.goal === g ? " selected" : ""}>${g}</option>`).join("")}
-          </select>
-        </label>
-      </div>`;
-  }
-
-  function levelNote(level) {
-    return {
-      Beginner: "Under a year of consistent lifting, or coming back after a long break.",
-      Intermediate: "A year or two in. The basic lifts feel familiar and progress has slowed.",
-      Advanced: "Several years of steady training with a good idea of what your body responds to.",
-    }[level];
-  }
-
   function render() {
     const p = Store.state.profile;
     const rec = Coach.recommend(p);
@@ -84,14 +11,30 @@ const YouView = (() => {
         </div>
       </div>
 
-      <form class="you-form" data-you-form>
-        ${form(p)}
-        <div class="you-actions">
-          <button class="btn btn--primary" type="submit">${Icons.get("check")} ${p ? "Update" : "Save"}</button>
-          ${p ? `<button class="link-btn mono" type="button" data-clear-profile>Clear</button>` : ""}
-        </div>
-        ${p && p.experience ? `<p class="you-note mono">${levelNote(p.experience)}</p>` : ""}
-      </form>
+      ${p
+        ? `<section class="profile-card">
+            <dl class="profile-grid mono">
+              ${p.age ? `<div><dt>Age</dt><dd>${p.age}</dd></div>` : ""}
+              ${p.heightCm ? `<div><dt>Height</dt><dd>${Units.isLb() ? `${Math.floor(Math.round(p.heightCm / 2.54) / 12)}'${Math.round(p.heightCm / 2.54) % 12}"` : `${Math.round(p.heightCm)} cm`}</dd></div>` : ""}
+              ${p.weightKg ? `<div><dt>Weight</dt><dd>${Fmt.weight(p.weightKg)}</dd></div>` : ""}
+              <div><dt>Experience</dt><dd>${esc(p.statedLevel || p.experience)}</dd></div>
+              <div><dt>Goal</dt><dd>${esc(p.goal || "—")}</dd></div>
+              <div><dt>Days</dt><dd>${p.days}</dd></div>
+              <div><dt>Trains at</dt><dd>${esc(p.place || "—")}</dd></div>
+            </dl>
+            <div class="you-actions">
+              <button class="btn" type="button" data-edit-profile>${Icons.get("edit")} Edit profile</button>
+              <button class="link-btn mono" type="button" data-clear-profile>Clear</button>
+            </div>
+          </section>`
+        : `<section class="hero-card is-empty">
+            <p class="card-kicker mono">Five questions</p>
+            <h2 class="hero-card-title">Find your plan</h2>
+            <p class="hero-card-meta mono">Experience, goal, days and equipment. About a minute.</p>
+            <div class="hero-card-actions">
+              <button class="btn btn--primary btn--lg" type="button" data-edit-profile>Start</button>
+            </div>
+          </section>`}
 
       ${rec
         ? `<section class="block">
@@ -130,41 +73,9 @@ const YouView = (() => {
           </div>`}`;
   }
 
-  function readForm(f) {
-    const lb = Units.isLb();
-    const num = (v) => (v === "" || v == null ? null : Number(v));
-    const heightCm = lb
-      ? f.ft.value || f.inch.value
-        ? Math.round(((num(f.ft.value) || 0) * 12 + (num(f.inch.value) || 0)) * 2.54)
-        : null
-      : num(f.cm.value);
-
-    return {
-      age: num(f.age.value),
-      heightCm,
-      weightKg: f.weight.value ? Units.toKg(Number(f.weight.value)) : null,
-      experience: f.experience.value,
-      days: num(f.days.value),
-      goal: f.goal.value,
-    };
-  }
-
   function mount(root) {
-    const f = root.querySelector("[data-you-form]");
-
-    f.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const next = readForm(f);
-      if (!next.experience || !next.days) {
-        return Toast.show("Pick your experience and days a week first");
-      }
-      Store.setProfile(next);
-      Sound.play("chime");
-      App.repaint();
-      Toast.show("Saved — recommendation below");
-    });
-
     root.addEventListener("click", (e) => {
+      if (e.target.closest("[data-edit-profile]")) return Onboarding.open(Store.state.profile);
       if (e.target.closest("[data-clear-profile]")) {
         Store.setProfile(null);
         Sound.play("remove");

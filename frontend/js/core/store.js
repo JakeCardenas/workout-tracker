@@ -273,6 +273,17 @@ const Store = (() => {
     return null;
   }
 
+  // the completed sets from the most recent session that included this lift
+  function lastSetsFor(exId) {
+    for (const session of state.history) {
+      const found = session.exercises.find((e) => e.exId === exId);
+      if (!found) continue;
+      const done = found.sets.filter((s) => s.done);
+      if (done.length) return { at: session.endedAt, sets: done };
+    }
+    return null;
+  }
+
   function historyFor(exId) {
     const points = [];
     for (let i = state.history.length - 1; i >= 0; i--) {
@@ -389,10 +400,34 @@ const Store = (() => {
   const clone = (v) => JSON.parse(JSON.stringify(v));
 
   const pick = (cfg) =>
-    ["sets", "reps", "weight", "rest"].reduce((out, key) => {
+    ["sets", "reps", "weight", "rest", "plan"].reduce((out, key) => {
       if (cfg && cfg[key] !== undefined) out[key] = cfg[key];
       return out;
     }, {});
+
+  // the per-set breakdown, filled in from the uniform values where absent
+  function setsOf(item) {
+    const rows = [];
+    for (let i = 0; i < item.sets; i++) {
+      const custom = item.plan && item.plan[i];
+      rows.push({
+        reps: custom ? custom.reps : item.reps,
+        weight: custom ? custom.weight : item.weight,
+      });
+    }
+    return rows;
+  }
+
+  function writeSets(itemUid, rows) {
+    const item = state.draft.items.find((i) => i.uid === itemUid);
+    if (!item) return;
+    item.sets = rows.length;
+    item.plan = rows.map((r) => ({ reps: r.reps, weight: r.weight }));
+    // keep the headline numbers meaningful: the first set is the reference
+    item.reps = rows[0] ? rows[0].reps : item.reps;
+    item.weight = rows[0] ? rows[0].weight : item.weight;
+    commit("draft");
+  }
 
   return {
     get state() {
@@ -413,6 +448,8 @@ const Store = (() => {
     removeDraftItem,
     moveDraftItem,
     setDraftName,
+    setsOf,
+    writeSets,
     clearDraft,
     saveDraft,
     loadWorkout,
@@ -424,6 +461,7 @@ const Store = (() => {
     applyRecords,
     deleteSession,
     lastPerformance,
+    lastSetsFor,
     historyFor,
     setSetting,
     setProfile,

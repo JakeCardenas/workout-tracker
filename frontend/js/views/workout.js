@@ -51,9 +51,9 @@ const Workout = (() => {
       exercises: source.items.map((item) => ({
         exId: item.exId,
         rest: item.rest,
-        sets: Array.from({ length: item.sets }, () => ({
-          reps: item.reps,
-          weight: item.weight,
+        sets: Store.setsOf(item).map((row) => ({
+          reps: row.reps,
+          weight: row.weight,
           done: false,
         })),
       })),
@@ -88,6 +88,30 @@ const Workout = (() => {
     return rows;
   }
 
+  // shown only on the first set, where changing the load still makes sense
+  function suggestionBlock(meta, set) {
+    if (live.setIndex > 0 || set.done) return "";
+    const tip = Coach.suggest(meta.id, { reps: set.reps });
+    if (!tip) return "";
+    const same = Math.abs(tip.weight - set.weight) < 0.01 && tip.reps === set.reps;
+    if (same) return "";
+
+    const last = Store.lastSetsFor(meta.id);
+    const top = last.sets.reduce((a, b) => (b.weight > a.weight ? b : a));
+
+    return `
+      <div class="suggest" data-suggest>
+        <div class="suggest-line">
+          <span class="mono suggest-was">Last · ${Fmt.weight(top.weight, meta.unit)} × ${top.reps}</span>
+          <span class="suggest-arrow">${Icons.get("forward")}</span>
+          <span class="mono suggest-now">${Fmt.weight(tip.weight, meta.unit)} × ${tip.reps}</span>
+        </div>
+        <p class="suggest-why">${esc(tip.why)}</p>
+        <button class="btn btn--sm" type="button" data-use-suggestion
+                data-w="${tip.weight}" data-r="${tip.reps}">Use this</button>
+      </div>`;
+  }
+
   function paint() {
     if (live.finished) return paintSummary();
     const { exercise, set, meta } = current();
@@ -112,6 +136,8 @@ const Workout = (() => {
           <p class="session-set mono">Set ${live.setIndex + 1} of ${exercise.sets.length}</p>
 
           <div class="session-art">${Art.render(meta.id, "is-playing")}</div>
+
+          ${suggestionBlock(meta, set)}
 
           <div class="session-dots" aria-hidden="true">
             ${exercise.sets
@@ -155,12 +181,38 @@ const Workout = (() => {
     });
   }
 
+  function checkRecord(exId, set) {
+    const rec = Store.state.records[exId];
+    if (!rec) return null;
+    if (set.weight > 0 && set.weight > rec.bestWeight) return { kind: "weight", value: set.weight };
+    if (set.reps > rec.bestReps) return { kind: "reps", value: set.reps };
+    return null;
+  }
+
+  function flashRecord(meta, hit) {
+    const el = root().querySelector(".session-main");
+    if (!el) return;
+    const label = hit.kind === "weight" ? Fmt.weight(hit.value, meta.unit) : `${hit.value} reps`;
+    el.insertAdjacentHTML(
+      "beforeend",
+      `<div class="pr-flash" role="status"><span class="pr-flash-tag mono">Personal record</span><span class="pr-flash-val">${label}</span></div>`,
+    );
+    Sound.play("pr");
+    if (navigator.vibrate) navigator.vibrate([12, 40, 18]);
+    setTimeout(() => {
+      const f = root().querySelector(".pr-flash");
+      if (f) f.remove();
+    }, 2200);
+  }
+
   function completeSet() {
-    const { exercise, set } = current();
+    const { exercise, set, meta } = current();
     if (set.done) return;
+    const hit = checkRecord(exercise.exId, set);
     set.done = true;
     set.at = Date.now();
     Sound.play("set");
+    if (hit) flashRecord(meta, hit);
 
     const card = root().querySelector(".session-main");
     if (card) {
@@ -326,7 +378,7 @@ const Workout = (() => {
           </dl>
 
           ${s.prs.length
-            ? `<section class="pr-block">
+            ? `<section class="pr-block is-celebrating">
                 <h2 class="section-label mono">Personal records</h2>
                 <ul class="pr-list">
                   ${s.prs
@@ -396,6 +448,23 @@ const Workout = (() => {
 
   document.addEventListener("click", (e) => {
     if (!live) return;
+    const use = e.target.closest("[data-use-suggestion]");
+    if (use) {
+      const { exercise, set } = current();
+      const w = +use.dataset.w;
+      const r = +use.dataset.r;
+      exercise.sets.forEach((x, i) => {
+        if (i >= live.setIndex && !x.done) {
+          x.weight = w;
+          x.reps = r;
+        }
+      });
+      Sound.play("tap");
+      remember();
+      paint();
+      return Toast.show("Applied to the remaining sets");
+    }
+
     if (e.target.closest("[data-complete]")) return completeSet();
     if (e.target.closest("[data-skip-set]")) {
       if (live.exIndex === live.exercises.length - 1 && live.setIndex === live.exercises[live.exIndex].sets.length - 1)

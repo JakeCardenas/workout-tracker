@@ -35,7 +35,9 @@ const App = (() => {
     );
     syncBadges();
 
+    // moving focus to the new view is what tells a screen reader the page changed
     if (animate !== false) {
+      host.focus({ preventScroll: true });
       host.classList.remove("is-entering");
       void host.offsetWidth;
       host.classList.add("is-entering");

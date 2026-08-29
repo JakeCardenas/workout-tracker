@@ -130,3 +130,30 @@ const SPLITS = [
 ];
 
 const SPLIT_BY_ID = Object.fromEntries(SPLITS.map((s) => [s.id, s]));
+
+const EXPERIENCE = [
+  { id: "New to Training", note: "Just starting and learning the basics." },
+  { id: "Beginner", note: "Some experience but looking for structure." },
+  { id: "Intermediate", note: "Training consistently and comfortable with common lifts." },
+  { id: "Advanced", note: "Years of structured training behind you." },
+];
+
+const GOALS = [
+  { id: "Build Muscle", note: "Hypertrophy work, moderate reps, plenty of volume." },
+  { id: "Get Stronger", note: "Heavier compound lifts, lower reps, longer rests." },
+  { id: "Improve Fitness", note: "Full body sessions that keep you moving." },
+  { id: "General Health", note: "Sustainable training you can keep up." },
+];
+
+const PLACES = [
+  { id: "Gym", note: "Full racks, machines and cables." },
+  { id: "Home", note: "Whatever you own, however little." },
+  { id: "Both", note: "Gym most weeks, home when life gets busy." },
+];
+
+// what each place can actually be expected to have, used to filter exercises
+const KIT = {
+  Gym: ["Barbell", "Dumbbell", "Cable", "Machine", "Bodyweight", "Band"],
+  Home: ["Bodyweight", "Dumbbell", "Band"],
+  Both: ["Barbell", "Dumbbell", "Cable", "Machine", "Bodyweight", "Band"],
+};

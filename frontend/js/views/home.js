@@ -50,7 +50,9 @@ const HomeView = (() => {
       const day = kind === "d" ? DAY_PLANS[id] : null;
       const items = day ? day.exercises : (Store.state.workouts.find((w) => w.id === id) || {}).items || [];
       const asDraft = day
-        ? day.exercises.map((e) => Object.assign({ exId: e }, Store.config(e)))
+        ? Coach.adaptDay(id, Store.state.profile).exercises.map((x) =>
+            Object.assign({ exId: x.id }, Store.config(x.id)),
+          )
         : items;
 
       return `
@@ -180,7 +182,7 @@ const HomeView = (() => {
       if (!day) return;
       Store.clearDraft();
       Store.setDraftName(day.name);
-      day.exercises.forEach((e) => Store.addToDraft(e));
+      Coach.adaptDay(id, Store.state.profile).exercises.forEach((x) => Store.addToDraft(x.id));
     }
     Workout.start(Store.state.draft);
   }

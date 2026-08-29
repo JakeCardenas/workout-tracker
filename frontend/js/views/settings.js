@@ -93,9 +93,26 @@ const SettingsView = (() => {
           `<button class="btn btn--sm btn--danger" type="button" data-clear="all">Erase all</button>`)}
       </section>
 
-      <p class="set-foot mono">
-        Exercise illustrations by Bryl Lim · CC BY-SA 4.0
-      </p>`;
+      <section class="about">
+        <img class="about-logo" src="./assets/brand/logo.svg" width="64" height="64" alt="" />
+        <h2 class="about-name">REPS</h2>
+        <p class="about-tag mono">Train. Track. Progress.</p>
+        <p class="about-copy">A workout guide and training tracker. Browse ${EXERCISES.length} movements,
+        build a workout, run it set by set with a rest timer, and watch the numbers move.
+        Everything is stored on your device.</p>
+        <dl class="about-meta mono">
+          <div><dt>Version</dt><dd>${VERSION}</dd></div>
+          <div><dt>Exercises</dt><dd>${EXERCISES.length}</dd></div>
+          <div><dt>Splits</dt><dd>${SPLITS.length}</dd></div>
+          <div><dt>Running as</dt><dd>${installed ? "Installed app" : "Web"}</dd></div>
+        </dl>
+        <p class="about-by mono">Made by Jake Cardenas</p>
+        <p class="set-foot mono">Exercise illustrations by
+          <a href="https://github.com/bryllim/workout-guide" target="_blank" rel="noopener">Bryl Lim</a> ·
+          <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>,
+          recoloured for this app.
+        </p>
+      </section>`;
   }
 
   function mount(root) {
