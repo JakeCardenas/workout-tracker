@@ -70,6 +70,41 @@ const BuildView = (() => {
       </li>`;
   }
 
+  const stars = (n) =>
+    Array.from({ length: 5 }, (_, i) => {
+      const full = i + 1 <= Math.floor(n);
+      const half = !full && i + 0.5 < n;
+      return `<span class="star${full ? " is-on" : half ? " is-half" : ""}"></span>`;
+    }).join("");
+
+  function splitCard(sp) {
+    return `
+      <article class="split-card" data-split="${sp.id}">
+        <div class="split-top">
+          <div>
+            <h3 class="split-name">${sp.name}</h3>
+            <p class="split-note">${sp.note}</p>
+          </div>
+          <span class="split-rating" title="${sp.rating} out of 5">${stars(sp.rating)}</span>
+        </div>
+        <ol class="split-week mono">
+          ${sp.week
+            .map((key, i) => {
+              const plan = key ? DAY_PLANS[key] : null;
+              return `<li class="${plan ? "" : "is-rest"}">
+                <span class="split-day">${WEEK[i]}</span>
+                <span class="split-what">${plan ? plan.name : "Rest"}</span>
+              </li>`;
+            })
+            .join("")}
+        </ol>
+        <div class="split-actions">
+          <button class="btn btn--sm btn--primary" type="button" data-plan-split="${sp.id}">${Icons.get("calendar")} Add to my week</button>
+          <button class="btn btn--sm" type="button" data-open-split="${sp.id}">See days</button>
+        </div>
+      </article>`;
+  }
+
   function savedCard(w) {
     const totals = draftTotals(w.items);
     return `
@@ -133,15 +168,9 @@ const BuildView = (() => {
       </section>
 
       <section class="block">
-        <h2 class="section-head"><span>Templates</span></h2>
-        <div class="template-grid">
-          ${TEMPLATES.map(
-            (t) => `<button class="template-card" type="button" data-template="${t.id}">
-              <span class="template-name">${t.name}</span>
-              <span class="template-note mono">${t.note}</span>
-              <span class="template-count mono">${t.exercises.length} exercises</span>
-            </button>`,
-          ).join("")}
+        <h2 class="section-head"><span>Splits</span><span class="group-count mono">a week at a time</span></h2>
+        <div class="split-grid">
+          ${SPLITS.map(splitCard).join("")}
         </div>
       </section>
 
@@ -151,6 +180,91 @@ const BuildView = (() => {
             <div class="saved-grid">${saved.map(savedCard).join("")}</div>
           </section>`
         : ""}`;
+  }
+
+  function loadDay(key) {
+    const plan = DAY_PLANS[key];
+    if (!plan) return;
+    Store.clearDraft();
+    Store.setDraftName(plan.name);
+    plan.exercises.forEach((id) => Store.addToDraft(id));
+    Sound.play("set");
+    App.repaint();
+    Toast.show(`${plan.name} loaded — change anything you like`);
+  }
+
+  function showSplit(id) {
+    const sp = SPLIT_BY_ID[id];
+    Sheet.open({
+      title: sp.name,
+      size: "sheet-panel--wide",
+      body: `
+        <header class="detail-head">
+          <div>
+            <h2 class="detail-title">${sp.name}</h2>
+            <p class="detail-meta mono">${sp.days} training days · ${sp.rating} / 5</p>
+          </div>
+        </header>
+        <p class="detail-summary">${sp.note}</p>
+        <ol class="split-days">
+          ${sp.week
+            .map((key, i) => {
+              const plan = key ? DAY_PLANS[key] : null;
+              if (!plan) return `<li class="split-day-row is-rest"><span class="split-day">${WEEK[i]}</span><span>Rest</span></li>`;
+              return `<li class="split-day-row">
+                <span class="split-day">${WEEK[i]}</span>
+                <div class="split-day-main">
+                  <strong>${plan.name}</strong>
+                  <span class="mono">${plan.focus}</span>
+                  <span class="mono split-list">${plan.exercises.map((e) => esc(EXERCISE_BY_ID[e].name)).join(" · ")}</span>
+                </div>
+                <button class="btn btn--sm" type="button" data-load-day="${key}">Load</button>
+              </li>`;
+            })
+            .join("")}
+        </ol>
+        <div class="confirm-actions">
+          <button class="btn btn--primary" type="button" data-plan-split="${sp.id}">${Icons.get("calendar")} Add to my week</button>
+          <button class="btn" type="button" data-close>Close</button>
+        </div>`,
+      onMount(scope) {
+        scope.querySelectorAll("[data-load-day]").forEach((b) =>
+          b.addEventListener("click", () => {
+            Sheet.close();
+            loadDay(b.dataset.loadDay);
+          }),
+        );
+        scope.querySelector("[data-plan-split]").addEventListener("click", () => {
+          Sheet.close();
+          applySplit(sp.id);
+        });
+      },
+    });
+  }
+
+  // drops the split onto the calendar starting from the coming Monday
+  function applySplit(id) {
+    const sp = SPLIT_BY_ID[id];
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const shift = (start.getDay() + 6) % 7;
+    start.setDate(start.getDate() - shift);
+
+    let placed = 0;
+    sp.week.forEach((key, i) => {
+      if (!key) return;
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      Store.planSession(Store.dayKey(d), { ref: `d:${key}`, name: DAY_PLANS[key].name });
+      placed += 1;
+    });
+
+    Sound.play("set");
+    App.repaint();
+    Toast.show(`${sp.name} on your calendar — ${placed} sessions this week`, {
+      action: "Open plan",
+      onAction: () => (location.hash = "#/plan"),
+    });
   }
 
   function mount(root) {
@@ -225,16 +339,11 @@ const BuildView = (() => {
         }
       }
 
-      const template = e.target.closest("[data-template]");
-      if (template) {
-        const t = TEMPLATES.find((x) => x.id === template.dataset.template);
-        Store.clearDraft();
-        Store.setDraftName(t.name);
-        t.exercises.forEach((id) => Store.addToDraft(id));
-        Sound.play("set");
-        App.repaint();
-        return Toast.show(`${t.name} loaded — edit anything you like`);
-      }
+      const openSplit = e.target.closest("[data-open-split]");
+      if (openSplit) return showSplit(openSplit.dataset.openSplit);
+
+      const planSplit = e.target.closest("[data-plan-split]");
+      if (planSplit) return applySplit(planSplit.dataset.planSplit);
 
       if (e.target.closest("[data-start]")) return Workout.start(Store.state.draft);
 

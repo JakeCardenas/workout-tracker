@@ -93,6 +93,7 @@ const Icons = (() => {
     copy: wrap('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h8"/>'),
     up: wrap('<path d="M12 19V5M6 11l6-6 6 6"/>'),
     down: wrap('<path d="M12 5v14M18 13l-6 6-6-6"/>'),
+    calendar: wrap('<rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/>'),
     back: wrap('<path d="M19 12H5M11 18l-6-6 6-6"/>'),
     forward: wrap('<path d="M5 12h14M13 6l6 6-6 6"/>'),
     skip: wrap('<path d="M5 5l9 7-9 7z" fill="currentColor"/><path d="M18 5v14"/>'),

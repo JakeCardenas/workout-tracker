@@ -2999,3 +2999,160 @@ svg {
     font-size: 0.68rem;
   }
 }
+
+.split-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 1rem;
+}
+.split-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.split-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+.split-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.split-name {
+  font-size: 1.05rem;
+  font-weight: 480;
+  letter-spacing: -0.025em;
+}
+.split-note {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--fg-dim);
+  max-width: 34ch;
+}
+.split-rating {
+  display: inline-flex;
+  gap: 2px;
+  flex: none;
+  margin-top: 0.2rem;
+}
+.star {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+}
+.star.is-on {
+  background: var(--fg);
+  border-color: var(--fg);
+}
+.star.is-half {
+  background: linear-gradient(90deg, var(--fg) 50%, transparent 50%);
+  border-color: var(--fg-dim);
+}
+
+.split-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.split-week li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+  text-align: center;
+}
+.split-day {
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.split-what {
+  width: 100%;
+  padding: 0.35rem 0.15rem;
+  border-radius: var(--r-sm);
+  background: var(--bg-softer);
+  font-size: 0.58rem;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.split-week li.is-rest .split-what {
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--fg-faint);
+}
+.split-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.split-days {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.split-day-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+}
+.split-day-row.is-rest {
+  border-style: dashed;
+  color: var(--fg-faint);
+  font-size: 0.85rem;
+}
+.split-day-row .split-day {
+  width: 2.4rem;
+  flex: none;
+  text-align: left;
+}
+.split-day-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.split-day-main strong {
+  font-size: 0.95rem;
+  font-weight: 480;
+}
+.split-day-main .mono {
+  font-size: 0.68rem;
+  color: var(--fg-faint);
+}
+.split-list {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .split-grid {
+    grid-template-columns: 1fr;
+  }
+  .split-what {
+    font-size: 0.5rem;
+  }
+  .split-day-row {
+    flex-wrap: wrap;
+  }
+}

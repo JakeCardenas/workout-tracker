@@ -110,7 +110,9 @@ const PlanView = (() => {
     const options = Store.state.workouts
       .map((w) => `<option value="w:${w.id}">${esc(w.name)}</option>`)
       .join("");
-    const templates = TEMPLATES.map((t) => `<option value="t:${t.id}">${t.name}</option>`).join("");
+    const dayOptions = Object.entries(DAY_PLANS)
+      .map(([k, d]) => `<option value="d:${k}">${d.name} — ${d.focus}</option>`)
+      .join("");
 
     Sheet.open({
       title: nice,
@@ -131,7 +133,7 @@ const PlanView = (() => {
           <select class="text-input" data-plan-pick>
             <option value="">Choose a workout…</option>
             ${options ? `<optgroup label="Saved">${options}</optgroup>` : ""}
-            <optgroup label="Templates">${templates}</optgroup>
+            <optgroup label="Split days">${dayOptions}</optgroup>
           </select>
         </div>
 
@@ -173,11 +175,11 @@ const PlanView = (() => {
     if (kind === "w") {
       Store.loadWorkout(id);
     } else {
-      const t = TEMPLATES.find((x) => x.id === id);
-      if (!t) return;
+      const day = DAY_PLANS[id];
+      if (!day) return;
       Store.clearDraft();
-      Store.setDraftName(t.name);
-      t.exercises.forEach((e) => Store.addToDraft(e));
+      Store.setDraftName(day.name);
+      day.exercises.forEach((e) => Store.addToDraft(e));
     }
     Workout.start(Store.state.draft);
   }

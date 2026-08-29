@@ -75,14 +75,14 @@ const HomeView = (() => {
         : ""}
 
       <section class="block">
-        <h2 class="section-head"><span>Quick start</span><a class="link-btn mono" href="#/build">All templates</a></h2>
+        <h2 class="section-head"><span>Quick start</span><a class="link-btn mono" href="#/build">All splits</a></h2>
         <div class="template-grid">
-          ${TEMPLATES.slice(0, 3)
+          ${["push", "pull", "legs"]
             .map(
-              (t) => `<button class="template-card" type="button" data-template="${t.id}">
-                <span class="template-name">${t.name}</span>
-                <span class="template-note mono">${t.note}</span>
-                <span class="template-count mono">${t.exercises.length} exercises</span>
+              (k) => `<button class="template-card" type="button" data-day="${k}">
+                <span class="template-name">${DAY_PLANS[k].name}</span>
+                <span class="template-note mono">${DAY_PLANS[k].focus}</span>
+                <span class="template-count mono">${DAY_PLANS[k].exercises.length} exercises</span>
               </button>`,
             )
             .join("")}
@@ -116,12 +116,12 @@ const HomeView = (() => {
         Store.loadWorkout(quick.dataset.quick);
         return Workout.start(Store.state.draft);
       }
-      const template = e.target.closest("[data-template]");
-      if (template) {
-        const t = TEMPLATES.find((x) => x.id === template.dataset.template);
+      const day = e.target.closest("[data-day]");
+      if (day) {
+        const plan = DAY_PLANS[day.dataset.day];
         Store.clearDraft();
-        Store.setDraftName(t.name);
-        t.exercises.forEach((id) => Store.addToDraft(id));
+        Store.setDraftName(plan.name);
+        plan.exercises.forEach((id) => Store.addToDraft(id));
         Sound.play("set");
         location.hash = "#/build";
         return;
