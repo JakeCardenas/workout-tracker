@@ -9,7 +9,8 @@
       content="An exercise library, workout planner and set-by-set tracker in one. Browse 36 movements, build a workout, run it with a rest timer and track every personal record."
     />
     <link rel="manifest" href="./site.webmanifest" />
-    <link rel="icon" href="./assets/icons/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="./assets/brand/logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="./assets/icons/icon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -26,7 +27,7 @@
       href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@300..600&display=swap"
       rel="stylesheet"
     />
-    <link href="./css/style.css?v=36" rel="stylesheet" />
+    <link href="./css/style.css?v=38" rel="stylesheet" />
   </head>
   <body>
     <a class="skip-link" href="#view">Skip to content</a>
@@ -37,7 +38,7 @@
           <path d="M4 7h16M4 12h16M4 17h16" />
         </svg>
       </button>
-      <a class="topbar-logo mono" href="#/">reps<span class="dot">.</span></a>
+      <a class="topbar-logo brand mono" href="#/"><img class="brand-logo" src="./assets/brand/logo.svg" width="24" height="24" alt="" />reps<span class="dot">.</span></a>
       <a class="icon-btn nav-fav" href="#/favorites" data-nav="favorites" aria-label="Favorites">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8L3.5 9.7l5.9-.9z" />
@@ -50,7 +51,7 @@
       <div class="nav-scrim" id="nav-scrim"></div>
 
       <aside class="sidebar">
-        <a class="side-logo mono" href="#/">reps<span class="dot">.</span></a>
+        <a class="side-logo brand mono" href="#/"><img class="brand-logo" src="./assets/brand/logo.svg" width="26" height="26" alt="" />reps<span class="dot">.</span></a>
         <p class="side-tag mono">Train smarter.<br />Track every set.</p>
 
         <nav class="side-nav mono" aria-label="Sections">
@@ -117,30 +118,33 @@
         Progress
       </a>
     </nav>
+    <div class="splash" id="splash"></div>
     <div class="offline-bar mono" data-offline-bar hidden>Offline — saved workouts and exercises still work</div>
     <div class="sheet" id="sheet"></div>
     <div class="toast" id="toast"></div>
     <div class="session" id="session"></div>
 
-    <script src="./js/data/exercises.js?v=36"></script>
-    <script src="./js/data/splits.js?v=36"></script>
-    <script src="./js/ui/sound.js?v=36"></script>
-    <script src="./js/ui/icons.js?v=36"></script>
-    <script src="./js/ui/art.js?v=36"></script>
-    <script src="./js/core/units.js?v=36"></script>
-    <script src="./js/core/plates.js?v=36"></script>
-    <script src="./js/core/coach.js?v=36"></script>
-    <script src="./js/core/shell.js?v=36"></script>
-    <script src="./js/core/backup.js?v=36"></script>
-    <script src="./js/core/store.js?v=36"></script>
-    <script src="./js/ui/ui.js?v=36"></script>
-    <script src="./js/views/library.js?v=36"></script>
-    <script src="./js/views/builder.js?v=36"></script>
-    <script src="./js/views/workout.js?v=36"></script>
-    <script src="./js/views/progress.js?v=36"></script>
-    <script src="./js/views/plan.js?v=36"></script>
-    <script src="./js/views/you.js?v=36"></script>
-    <script src="./js/views/settings.js?v=36"></script>
-    <script src="./js/app.js?v=36"></script>
+    <script src="./js/data/exercises.js?v=38"></script>
+    <script src="./js/data/splits.js?v=38"></script>
+    <script src="./js/ui/sound.js?v=38"></script>
+    <script src="./js/ui/icons.js?v=38"></script>
+    <script src="./js/ui/art.js?v=38"></script>
+    <script src="./js/ui/splash.js?v=38"></script>
+    <script src="./js/core/units.js?v=38"></script>
+    <script src="./js/core/plates.js?v=38"></script>
+    <script src="./js/core/coach.js?v=38"></script>
+    <script src="./js/core/shell.js?v=38"></script>
+    <script src="./js/core/backup.js?v=38"></script>
+    <script src="./js/core/store.js?v=38"></script>
+    <script src="./js/ui/ui.js?v=38"></script>
+    <script src="./js/views/library.js?v=38"></script>
+    <script src="./js/views/builder.js?v=38"></script>
+    <script src="./js/views/workout.js?v=38"></script>
+    <script src="./js/views/progress.js?v=38"></script>
+    <script src="./js/views/plan.js?v=38"></script>
+    <script src="./js/views/you.js?v=38"></script>
+    <script src="./js/views/settings.js?v=38"></script>
+    <script src="./js/views/home.js?v=38"></script>
+    <script src="./js/app.js?v=38"></script>
   </body>
 </html>
