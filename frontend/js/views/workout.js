@@ -167,6 +167,7 @@ const Workout = (() => {
         </main>
       </div>`;
 
+    Art.scan(root());
     const config = root().querySelector("[data-config]");
     config.addEventListener("stepper", (e) => {
       const { exercise: ex, set: active } = current();

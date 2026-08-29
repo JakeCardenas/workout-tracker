@@ -29,6 +29,7 @@ const App = (() => {
     host.innerHTML = entry.view.render();
     stale.replaceWith(host);
     entry.view.mount(host);
+    Art.scan(host);
 
     document.querySelectorAll("[data-nav]").forEach((link) =>
       link.classList.toggle("is-active", link.dataset.nav === entry.nav),

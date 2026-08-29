@@ -2805,6 +2805,22 @@ svg {
 .art-frame:first-child {
   opacity: 1;
 }
+.art.is-idle {
+  background: linear-gradient(90deg, var(--bg-soft) 25%, var(--bg-softer) 37%, var(--bg-soft) 63%);
+  background-size: 400% 100%;
+  border-radius: var(--r-md);
+  animation: shimmer 1.4s linear infinite;
+}
+.art:not(.is-idle) .art-frame:first-child {
+  animation: artFade 0.28s var(--ease) both;
+}
+@keyframes artFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .art.is-idle { animation: none; }
+}
 
 .art.is-playing .art-frame:nth-child(1),
 .ex-card:hover .art .art-frame:nth-child(1),

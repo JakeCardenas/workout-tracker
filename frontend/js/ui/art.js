@@ -1,19 +1,64 @@
 const Art = (() => {
   const FRAMES = [1, 2, 3];
 
-  // drawn as masks rather than <img>, so the figure takes the page's text
-  // colour instead of being stuck on whatever the file was authored in
+  // Masks rather than <img>, so the figure takes the page's text colour instead
+  // of whatever the file was drawn in. The cost is that a mask has no native
+  // lazy loading, so an observer holds them back until the card is near view.
   function render(exId, extraClass = "") {
     const ex = EXERCISE_BY_ID[exId];
     if (!ex || !ex.art) return "";
-    // the mask goes inline: a url() inside a custom property resolves against
-    // the stylesheet's folder, not the page, and silently 404s
-    const layers = FRAMES.map((n) => {
-      const src = `url('assets/exercises/${ex.art}/${n}.svg')`;
-      return `<span class="art-frame" style="-webkit-mask-image:${src};mask-image:${src}"></span>`;
-    }).join("");
-    return `<figure class="art ${extraClass}" role="img" aria-label="${esc(ex.name)}">${layers}</figure>`;
+    const layers = FRAMES.map(
+      (n) => `<span class="art-frame" data-src="assets/exercises/${ex.art}/${n}.svg"></span>`,
+    ).join("");
+    return `<figure class="art is-idle ${extraClass}" role="img" aria-label="${esc(ex.name)}">${layers}</figure>`;
   }
 
-  return { render, frames: FRAMES.length };
+  function paint(figure) {
+    if (!figure || !figure.classList.contains("is-idle")) return;
+    figure.querySelectorAll("[data-src]").forEach((frame) => {
+      const src = `url('${frame.dataset.src}')`;
+      frame.style.webkitMaskImage = src;
+      frame.style.maskImage = src;
+      frame.removeAttribute("data-src");
+    });
+    figure.classList.remove("is-idle");
+  }
+
+  const watcher =
+    "IntersectionObserver" in window
+      ? new IntersectionObserver(
+          (entries, obs) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              paint(entry.target);
+              obs.unobserve(entry.target);
+            });
+          },
+          { rootMargin: "300px" },
+        )
+      : null;
+
+  const NEAR = 400;
+
+  // A rect check runs first so anything on or near screen paints synchronously.
+  // The observer only handles what is further down. Relying on the observer
+  // alone leaves every figure blank in a backgrounded tab, where it never fires.
+  function scan(root = document) {
+    const idle = [...root.querySelectorAll(".art.is-idle")];
+    if (!idle.length) return;
+
+    const height = window.innerHeight || 800;
+    const rest = [];
+    idle.forEach((fig) => {
+      const r = fig.getBoundingClientRect();
+      const near = r.bottom > -NEAR && r.top < height + NEAR;
+      if (near || (r.width === 0 && r.height === 0)) paint(fig);
+      else rest.push(fig);
+    });
+
+    if (!watcher) return rest.forEach(paint);
+    rest.forEach((fig) => watcher.observe(fig));
+  }
+
+  return { render, scan, paint, frames: FRAMES.length };
 })();

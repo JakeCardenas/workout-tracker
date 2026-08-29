@@ -223,6 +223,11 @@ const LibraryView = (() => {
     </div>`;
   }
 
+  const skeleton = (n = 8) =>
+    `<div class="skeleton">${Array.from({ length: n })
+      .map(() => `<div class="sk-card"><div class="sk-art"></div><div class="sk-line"></div><div class="sk-line is-short"></div></div>`)
+      .join("")}</div>`;
+
   function results() {
     const list = EXERCISES.filter(matches);
     if (!list.length)
@@ -277,6 +282,7 @@ const LibraryView = (() => {
   function repaintResults(root) {
     const box = root.querySelector("[data-results]");
     box.innerHTML = results();
+    Art.scan(box);
   }
 
   function mount(root) {

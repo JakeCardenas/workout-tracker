@@ -174,6 +174,7 @@ const Sheet = (() => {
     document.body.classList.add("no-scroll");
     Sound.play("swell");
     if (onMount) onMount(el.querySelector(".sheet-body"));
+    Art.scan(el);
     const focusable = el.querySelector("input, button:not([data-close])");
     if (focusable) focusable.focus({ preventScroll: true });
   }

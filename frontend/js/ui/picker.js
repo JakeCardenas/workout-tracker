@@ -89,7 +89,9 @@ const Picker = (() => {
       body: body(onPick),
       onMount(scope) {
         const repaint = () => {
-          scope.querySelector("[data-pf-results]").innerHTML = results(onPick);
+          const box = scope.querySelector("[data-pf-results]");
+          box.innerHTML = results(onPick);
+          Art.scan(box);
         };
 
         scope.querySelector("[data-pf-search]").addEventListener("input", (e) => {
