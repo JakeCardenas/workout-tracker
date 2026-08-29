@@ -1,29 +1,25 @@
-const CACHE = "reps-v23";
+const CACHE = "reps-v28";
 
 const SHELL = [
   "./",
   "./index.html",
   "./site.webmanifest",
-  "./css/style.css?v=23",
-  "./js/data/exercises.js?v=23",
-  "./js/data/templates.js?v=23",
-  "./js/ui/sound.js?v=23",
-  "./js/ui/icons.js?v=23",
-  "./js/ui/figures.js?v=23",
-  "./js/core/units.js?v=23",
-  "./js/core/plates.js?v=23",
-  "./js/core/backup.js?v=23",
-  "./js/account/config.js?v=23",
-  "./js/account/api.js?v=23",
-  "./js/core/store.js?v=23",
-  "./js/ui/ui.js?v=23",
-  "./js/views/library.js?v=23",
-  "./js/views/builder.js?v=23",
-  "./js/views/workout.js?v=23",
-  "./js/views/progress.js?v=23",
-  "./js/account/sync.js?v=23",
-  "./js/account/gate.js?v=23",
-  "./js/app.js?v=23",
+  "./css/style.css?v=28",
+  "./js/data/exercises.js?v=28",
+  "./js/data/templates.js?v=28",
+  "./js/ui/sound.js?v=28",
+  "./js/ui/icons.js?v=28",
+  "./js/ui/art.js?v=28",
+  "./js/core/units.js?v=28",
+  "./js/core/plates.js?v=28",
+  "./js/core/backup.js?v=28",
+  "./js/core/store.js?v=28",
+  "./js/ui/ui.js?v=28",
+  "./js/views/library.js?v=28",
+  "./js/views/builder.js?v=28",
+  "./js/views/workout.js?v=28",
+  "./js/views/progress.js?v=28",
+  "./js/app.js?v=28",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
 ];
@@ -51,14 +47,26 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return;
 
-  // a deep link carries a query the cache key does not, so ignore it here
-  const lookup =
-    e.request.mode === "navigate"
-      ? caches.match("./index.html", { ignoreSearch: true })
-      : caches.match(e.request);
+  const shell = () => caches.match("./index.html", { ignoreSearch: true });
+
+  // the page itself always comes from the network when there is one. cached
+  // markup would keep pointing at whichever script versions it shipped with,
+  // and no amount of cache busting downstream can fix that.
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put("./index.html", copy));
+          return res;
+        })
+        .catch(shell),
+    );
+    return;
+  }
 
   e.respondWith(
-    lookup.then((hit) => {
+    caches.match(e.request).then((hit) => {
       if (hit) return hit;
       return fetch(e.request)
         .then((res) => {
@@ -68,7 +76,7 @@ self.addEventListener("fetch", (e) => {
           }
           return res;
         })
-        .catch(() => caches.match("./index.html", { ignoreSearch: true }));
+        .catch(shell);
     }),
   );
 });

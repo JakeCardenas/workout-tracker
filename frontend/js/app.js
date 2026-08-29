@@ -272,34 +272,6 @@ const App = (() => {
     });
   }
 
-  function openAccountSheet() {
-    const who = Gate.current();
-    const synced = Api.reachable();
-    Sheet.open({
-      title: "Account",
-      body: `
-        <header class="detail-head">
-          <div>
-            <h2 class="detail-title">Signed in</h2>
-            <p class="detail-meta mono">${esc(who.name)}</p>
-          </div>
-        </header>
-        <p class="detail-summary">${synced
-          ? "Every change is pushed to your account a moment after you make it, and pulled back down when you sign in on another device."
-          : "The server is not reachable, so changes are being kept on this device until it is."}</p>
-        <div class="confirm-actions">
-          <button class="btn" type="button" data-sign-out>Sign out</button>
-          <button class="btn" type="button" data-close>Close</button>
-        </div>`,
-      onMount(scope) {
-        scope.querySelector("[data-sign-out]").addEventListener("click", () => {
-          Sheet.close();
-          Gate.signOut();
-        });
-      },
-    });
-  }
-
   function syncUnitButtons() {
     document.querySelectorAll("[data-unit-toggle]").forEach((b) => {
       b.textContent = Units.label().toUpperCase();
@@ -375,9 +347,6 @@ const App = (() => {
       }
 
       if (e.target.closest("[data-open-data]")) openDataSheet();
-      if (e.target.closest("[data-open-account]")) {
-        Gate.current() ? openAccountSheet() : Gate.open("signin");
-      }
 
       const unitBtn = e.target.closest("[data-unit-toggle]");
       if (unitBtn) {
@@ -436,8 +405,7 @@ const App = (() => {
     paint(false);
     document.body.classList.add("is-ready");
 
-    Store.subscribe(() => Sync.schedulePush());
-    Gate.start();
+
 
     // needs http(s); opening index.html straight off the disk just skips it
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

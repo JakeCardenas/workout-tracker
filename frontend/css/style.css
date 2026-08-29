@@ -2778,3 +2778,57 @@ svg {
     animation: none;
   }
 }
+
+.art {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  margin: 0;
+  color: var(--fg);
+}
+.art-frame {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: 0;
+}
+.art-frame:first-child {
+  opacity: 1;
+}
+
+.art.is-playing .art-frame,
+.ex-card:hover .art .art-frame,
+.ex-card:focus-visible .art .art-frame {
+  animation: artCycle 1.5s steps(1) infinite;
+}
+.art.is-playing .art-frame:nth-child(2),
+.ex-card:hover .art .art-frame:nth-child(2) {
+  animation-delay: 0.5s;
+}
+.art.is-playing .art-frame:nth-child(3),
+.ex-card:hover .art .art-frame:nth-child(3) {
+  animation-delay: 1s;
+}
+@keyframes artCycle {
+  0%, 33.32% { opacity: 1; }
+  33.33%, 100% { opacity: 0; }
+}
+
+.art--sm {
+  width: 2.6rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .art.is-playing .art-frame,
+  .ex-card:hover .art .art-frame {
+    animation: none;
+  }
+  .art.is-playing .art-frame:first-child {
+    opacity: 1;
+  }
+}

@@ -25,6 +25,7 @@ const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 const EXERCISES = [
   {
     id: "bench-press",
+    art: "bench-press",
     name: "Bench Press",
     group: "Chest",
     equipment: "Barbell",
@@ -51,6 +52,7 @@ const EXERCISES = [
   },
   {
     id: "incline-bench-press",
+    art: "incline-bench-press",
     name: "Incline Bench Press",
     group: "Chest",
     equipment: "Barbell",
@@ -77,6 +79,7 @@ const EXERCISES = [
   },
   {
     id: "dumbbell-bench-press",
+    art: "dumbbell-bench-press",
     name: "Dumbbell Bench Press",
     group: "Chest",
     equipment: "Dumbbell",
@@ -103,6 +106,7 @@ const EXERCISES = [
   },
   {
     id: "incline-dumbbell-press",
+    art: "incline-dumbbell-press",
     name: "Incline Dumbbell Press",
     group: "Chest",
     equipment: "Dumbbell",
@@ -129,6 +133,7 @@ const EXERCISES = [
   },
   {
     id: "chest-fly",
+    art: "dumbbell-fly",
     name: "Chest Fly",
     group: "Chest",
     equipment: "Dumbbell",
@@ -155,6 +160,7 @@ const EXERCISES = [
   },
   {
     id: "cable-crossover",
+    art: "cable-fly",
     name: "Cable Crossover",
     group: "Chest",
     equipment: "Cable",
@@ -181,6 +187,7 @@ const EXERCISES = [
   },
   {
     id: "push-ups",
+    art: "push-up",
     name: "Push-ups",
     group: "Chest",
     equipment: "Bodyweight",
@@ -208,6 +215,7 @@ const EXERCISES = [
 
   {
     id: "pull-ups",
+    art: "pull-up",
     name: "Pull-ups",
     group: "Back",
     equipment: "Bodyweight",
@@ -234,6 +242,7 @@ const EXERCISES = [
   },
   {
     id: "lat-pulldown",
+    art: "lat-pulldown",
     name: "Lat Pulldown",
     group: "Back",
     equipment: "Machine",
@@ -260,6 +269,7 @@ const EXERCISES = [
   },
   {
     id: "seated-cable-row",
+    art: "seated-row",
     name: "Seated Cable Row",
     group: "Back",
     equipment: "Cable",
@@ -286,6 +296,7 @@ const EXERCISES = [
   },
   {
     id: "barbell-row",
+    art: "barbell-row",
     name: "Barbell Row",
     group: "Back",
     equipment: "Barbell",
@@ -312,6 +323,7 @@ const EXERCISES = [
   },
   {
     id: "dumbbell-row",
+    art: "one-arm-dumbbell-row",
     name: "Dumbbell Row",
     group: "Back",
     equipment: "Dumbbell",
@@ -338,6 +350,7 @@ const EXERCISES = [
   },
   {
     id: "deadlift",
+    art: "deadlift",
     name: "Deadlift",
     group: "Back",
     equipment: "Barbell",
@@ -365,6 +378,7 @@ const EXERCISES = [
 
   {
     id: "overhead-press",
+    art: "overhead-press",
     name: "Overhead Press",
     group: "Shoulders",
     equipment: "Barbell",
@@ -391,6 +405,7 @@ const EXERCISES = [
   },
   {
     id: "dumbbell-shoulder-press",
+    art: "seated-dumbbell-press",
     name: "Dumbbell Shoulder Press",
     group: "Shoulders",
     equipment: "Dumbbell",
@@ -417,6 +432,7 @@ const EXERCISES = [
   },
   {
     id: "lateral-raises",
+    art: "lateral-raise",
     name: "Lateral Raises",
     group: "Shoulders",
     equipment: "Dumbbell",
@@ -443,6 +459,7 @@ const EXERCISES = [
   },
   {
     id: "front-raises",
+    art: "front-raise",
     name: "Front Raises",
     group: "Shoulders",
     equipment: "Dumbbell",
@@ -469,6 +486,7 @@ const EXERCISES = [
   },
   {
     id: "rear-delt-fly",
+    art: "rear-delt-fly",
     name: "Rear Delt Fly",
     group: "Shoulders",
     equipment: "Dumbbell",
@@ -495,6 +513,7 @@ const EXERCISES = [
   },
   {
     id: "face-pulls",
+    art: "face-pull",
     name: "Face Pulls",
     group: "Shoulders",
     equipment: "Cable",
@@ -522,6 +541,7 @@ const EXERCISES = [
 
   {
     id: "barbell-curl",
+    art: "ez-bar-curl",
     name: "Barbell Curl",
     group: "Arms",
     equipment: "Barbell",
@@ -548,6 +568,7 @@ const EXERCISES = [
   },
   {
     id: "dumbbell-curl",
+    art: "bicep-curl",
     name: "Dumbbell Curl",
     group: "Arms",
     equipment: "Dumbbell",
@@ -574,6 +595,7 @@ const EXERCISES = [
   },
   {
     id: "hammer-curl",
+    art: "hammer-curl",
     name: "Hammer Curl",
     group: "Arms",
     equipment: "Dumbbell",
@@ -600,6 +622,7 @@ const EXERCISES = [
   },
   {
     id: "tricep-pushdown",
+    art: "tricep-pushdown",
     name: "Tricep Pushdown",
     group: "Arms",
     equipment: "Cable",
@@ -626,6 +649,7 @@ const EXERCISES = [
   },
   {
     id: "skull-crushers",
+    art: "skull-crusher",
     name: "Skull Crushers",
     group: "Arms",
     equipment: "Barbell",
@@ -652,6 +676,7 @@ const EXERCISES = [
   },
   {
     id: "overhead-tricep-extension",
+    art: "overhead-tricep-extension",
     name: "Overhead Tricep Extension",
     group: "Arms",
     equipment: "Dumbbell",
@@ -679,6 +704,7 @@ const EXERCISES = [
 
   {
     id: "squat",
+    art: "squat",
     name: "Squat",
     group: "Legs",
     equipment: "Barbell",
@@ -705,6 +731,7 @@ const EXERCISES = [
   },
   {
     id: "leg-press",
+    art: "leg-press",
     name: "Leg Press",
     group: "Legs",
     equipment: "Machine",
@@ -731,6 +758,7 @@ const EXERCISES = [
   },
   {
     id: "romanian-deadlift",
+    art: "romanian-deadlift",
     name: "Romanian Deadlift",
     group: "Legs",
     equipment: "Barbell",
@@ -757,6 +785,7 @@ const EXERCISES = [
   },
   {
     id: "leg-extension",
+    art: "leg-extension",
     name: "Leg Extension",
     group: "Legs",
     equipment: "Machine",
@@ -783,6 +812,7 @@ const EXERCISES = [
   },
   {
     id: "leg-curl",
+    art: "leg-curl",
     name: "Leg Curl",
     group: "Legs",
     equipment: "Machine",
@@ -809,6 +839,7 @@ const EXERCISES = [
   },
   {
     id: "calf-raises",
+    art: "calf-raise",
     name: "Calf Raises",
     group: "Legs",
     equipment: "Machine",
@@ -836,6 +867,7 @@ const EXERCISES = [
 
   {
     id: "plank",
+    art: "plank",
     name: "Plank",
     group: "Core",
     equipment: "Bodyweight",
@@ -863,6 +895,7 @@ const EXERCISES = [
   },
   {
     id: "hanging-leg-raise",
+    art: "hanging-leg-raise",
     name: "Hanging Leg Raise",
     group: "Core",
     equipment: "Bodyweight",
@@ -889,6 +922,7 @@ const EXERCISES = [
   },
   {
     id: "cable-crunch",
+    art: "crunch",
     name: "Cable Crunch",
     group: "Core",
     equipment: "Cable",
@@ -915,6 +949,7 @@ const EXERCISES = [
   },
   {
     id: "russian-twist",
+    art: "russian-twist",
     name: "Russian Twist",
     group: "Core",
     equipment: "Bodyweight",
@@ -941,6 +976,7 @@ const EXERCISES = [
   },
   {
     id: "ab-wheel-rollout",
+    art: "ab-wheel",
     name: "Ab Wheel Rollout",
     group: "Core",
     equipment: "Bodyweight",

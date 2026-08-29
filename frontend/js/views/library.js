@@ -23,7 +23,7 @@ function exerciseCard(ex, index = 0) {
               aria-label="${fav ? "Remove from" : "Add to"} favorites">${Icons.get(fav ? "starFilled" : "star")}</button>
       <div class="ex-art">
         <span class="ex-equip" title="${ex.equipment}">${Icons.equipment(ex.equipment)}</span>
-        ${Figure.render(ex.id)}
+        ${Art.render(ex.id)}
       </div>
       <div class="ex-info">
         <h3 class="ex-name">${esc(ex.name)}</h3>
@@ -74,7 +74,7 @@ const ExerciseSheet = (() => {
       <div class="detail-grid">
         <figure class="detail-art">
           <span class="ex-equip" title="${ex.equipment}">${Icons.equipment(ex.equipment)}</span>
-          ${Figure.render(ex.id, "fig--draw")}
+          ${Art.render(ex.id, "is-playing")}
         </figure>
 
         <div class="detail-side">

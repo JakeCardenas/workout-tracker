@@ -60,8 +60,6 @@ const Workout = (() => {
     const { exercise, set, meta } = current();
     const s = stepsFor(meta);
     const progress = (doneSets() / totalSets()) * 100;
-    const fresh = live.drawn !== live.exIndex;
-    live.drawn = live.exIndex;
 
     root().innerHTML = `
       <div class="session-shell">
@@ -80,7 +78,7 @@ const Workout = (() => {
           <h1 class="session-ex">${esc(meta.name)}</h1>
           <p class="session-set mono">Set ${live.setIndex + 1} of ${exercise.sets.length}</p>
 
-          <div class="session-art">${Figure.render(meta.id, fresh ? "fig--draw" : "")}</div>
+          <div class="session-art">${Art.render(meta.id, "is-playing")}</div>
 
           <div class="session-dots" aria-hidden="true">
             ${exercise.sets

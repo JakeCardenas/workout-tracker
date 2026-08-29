@@ -147,3 +147,15 @@ publishes 302 exercise illustrations as an npm package. None of those assets
 are used here — the figures in this project are drawn from scratch in
 `figures.js` so the app stays dependency-free. Code, design, data and the
 tracking half of the app are original.
+
+## Credits
+
+The exercise illustrations are by **Bryl Lim**, from the
+[Workout Guide](https://github.com/bryllim/workout-guide) asset library, used
+under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). They have
+been recoloured to `currentColor` and had their fixed dimensions removed so they
+sit on a light background and scale with CSS; the drawings themselves are
+unchanged. Full detail in `frontend/assets/exercises/CREDITS.md`.
+
+Everything else here is my own.
+
