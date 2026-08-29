@@ -1,16 +1,12 @@
 const Sound = (() => {
   let ctx = null;
-  let master = null;
-  let noiseBuffer = null;
+  let bus = null;
   let unlocked = false;
 
   let enabled = localStorage.getItem("reps.sound");
   enabled = enabled === null ? true : enabled === "true";
 
-  const MASTER = 1.7;
-
   let lastHover = 0;
-  const HOVER_GAP_MS = 45;
 
   function ensure() {
     if (!ctx) {
@@ -18,21 +14,22 @@ const Sound = (() => {
       if (!AC) return null;
       ctx = new AC();
 
-      const len = Math.floor(ctx.sampleRate * 0.1);
-      noiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
-      const d = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      // one soft ceiling for everything, so nothing ever spikes
+      const lid = ctx.createDynamicsCompressor();
+      lid.threshold.value = -18;
+      lid.knee.value = 12;
+      lid.ratio.value = 6;
+      lid.attack.value = 0.004;
+      lid.release.value = 0.12;
 
-      const limiter = ctx.createDynamicsCompressor();
-      limiter.threshold.value = -4;
-      limiter.knee.value = 0;
-      limiter.ratio.value = 20;
-      limiter.attack.value = 0.002;
-      limiter.release.value = 0.08;
+      const warmth = ctx.createBiquadFilter();
+      warmth.type = "lowpass";
+      warmth.frequency.value = 3200;
+      warmth.Q.value = 0.6;
 
-      master = ctx.createGain();
-      master.gain.value = MASTER;
-      master.connect(limiter).connect(ctx.destination);
+      bus = ctx.createGain();
+      bus.gain.value = 0.55;
+      bus.connect(warmth).connect(lid).connect(ctx.destination);
     }
     if (ctx.state === "suspended") ctx.resume();
     return ctx;
@@ -50,123 +47,73 @@ const Sound = (() => {
     ),
   );
 
-  function env(param, peak, at, attack, decay) {
-    param.setValueAtTime(0.0001, at);
-    param.exponentialRampToValueAtTime(Math.max(peak, 0.0002), at + attack);
-    param.exponentialRampToValueAtTime(0.0001, at + decay);
-  }
-
-  function noise({ freq, q, peak, decay, delay = 0, out }) {
-    const at = ctx.currentTime + delay;
-    const src = ctx.createBufferSource();
-    src.buffer = noiseBuffer;
-
-    const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.frequency.value = freq;
-    bp.Q.value = q;
-
-    const g = ctx.createGain();
-    env(g.gain, peak, at, 0.001, decay);
-
-    src.connect(bp).connect(g).connect(out || master);
-    src.start(at);
-    src.stop(at + decay + 0.02);
-  }
-
-  function tone({ freq, peak, attack = 0.001, decay, delay = 0, out }) {
-    const at = ctx.currentTime + delay;
+  // one shape for every cue: a sine with a slow edge, so nothing clicks
+  function note(freq, { gain = 0.05, at = 0, hold = 0.09, fade = 0.14, type = "sine" } = {}) {
+    const t = ctx.currentTime + at;
     const osc = ctx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, at);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
 
     const g = ctx.createGain();
-    env(g.gain, peak, at, attack, decay);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.012);
+    g.gain.setValueAtTime(gain, t + hold);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + hold + fade);
 
-    osc.connect(g).connect(out || master);
-    osc.start(at);
-    osc.stop(at + decay + 0.03);
-  }
-
-  function lowpass(freq) {
-    const f = ctx.createBiquadFilter();
-    f.type = "lowpass";
-    f.frequency.value = freq;
-    f.Q.value = 1;
-    f.connect(master);
-    return f;
+    osc.connect(g).connect(bus);
+    osc.start(t);
+    osc.stop(t + hold + fade + 0.02);
   }
 
   const cues = {
     hover() {
       const now = performance.now();
-      if (now - lastHover < HOVER_GAP_MS) return;
+      if (now - lastHover < 70) return;
       lastHover = now;
-      noise({ freq: 5400, q: 1.8, peak: 0.14, decay: 0.019 });
-      tone({ freq: 2600, peak: 0.018, decay: 0.013 });
+      note(1320, { gain: 0.012, hold: 0.01, fade: 0.05 });
     },
 
-    tap() {
-      noise({ freq: 2200, q: 1.6, peak: 0.12, decay: 0.017 });
-      noise({ freq: 3800, q: 1.6, peak: 0.1, decay: 0.021, delay: 0.024 });
-    },
+    tap: () => note(660, { gain: 0.038, hold: 0.02, fade: 0.09 }),
 
-    step() {
-      noise({ freq: 3200, q: 1.7, peak: 0.08, decay: 0.014 });
-    },
+    step: () => note(880, { gain: 0.022, hold: 0.012, fade: 0.05 }),
 
     swell() {
-      const lp = lowpass(2500);
-      noise({ freq: 1700, q: 1.4, peak: 0.13, decay: 0.021 });
-      tone({ freq: 528, peak: 0.06, attack: 0.06, decay: 0.38, out: lp });
-      tone({ freq: 528, peak: 0.05, attack: 0.06, decay: 0.4, out: lp });
+      note(392, { gain: 0.03, hold: 0.06, fade: 0.34 });
+      note(587.33, { gain: 0.022, at: 0.05, hold: 0.06, fade: 0.32 });
     },
 
     chime() {
-      const lp = lowpass(4000);
-      tone({ freq: 1046.5, peak: 0.09, attack: 0.006, decay: 0.226, out: lp });
-      tone({ freq: 1568, peak: 0.08, attack: 0.006, decay: 0.266, delay: 0.09, out: lp });
+      note(880, { gain: 0.04, hold: 0.05, fade: 0.24 });
+      note(1174.66, { gain: 0.03, at: 0.08, hold: 0.05, fade: 0.28 });
     },
 
-    tick() {
-      noise({ freq: 4200, q: 2.2, peak: 0.09, decay: 0.016 });
-      tone({ freq: 1180, peak: 0.03, decay: 0.05 });
-    },
+    tick: () => note(1046.5, { gain: 0.026, hold: 0.012, fade: 0.05 }),
 
+    // a set is banked: a small, certain two-note step up
     set() {
-      const lp = lowpass(5200);
-      noise({ freq: 2400, q: 1.6, peak: 0.12, decay: 0.018 });
-      tone({ freq: 784, peak: 0.07, decay: 0.12, out: lp });
-      tone({ freq: 1174.7, peak: 0.06, decay: 0.18, delay: 0.07, out: lp });
+      note(587.33, { gain: 0.045, hold: 0.04, fade: 0.14 });
+      note(880, { gain: 0.038, at: 0.09, hold: 0.05, fade: 0.22 });
     },
 
+    // rest is over: same interval, opened out so it reads as an alert
     rest() {
-      const lp = lowpass(4000);
-      tone({ freq: 880, peak: 0.09, attack: 0.004, decay: 0.16, out: lp });
-      tone({ freq: 880, peak: 0.09, attack: 0.004, decay: 0.16, delay: 0.2, out: lp });
-      tone({ freq: 1318.5, peak: 0.085, attack: 0.006, decay: 0.34, delay: 0.4, out: lp });
+      note(659.25, { gain: 0.045, hold: 0.06, fade: 0.18 });
+      note(987.77, { gain: 0.04, at: 0.16, hold: 0.08, fade: 0.32 });
     },
 
     pr() {
-      const lp = lowpass(5000);
-      [880, 1108.7, 1318.5, 1760].forEach((f, i) =>
-        tone({ freq: f, peak: 0.075, attack: 0.005, decay: 0.3, delay: i * 0.075, out: lp }),
+      [587.33, 880, 1174.66].forEach((f, i) =>
+        note(f, { gain: 0.04, at: i * 0.1, hold: 0.06, fade: 0.4 }),
       );
-      noise({ freq: 6200, q: 1.6, peak: 0.06, decay: 0.03, delay: 0.3 });
     },
 
     done() {
-      const lp = lowpass(4200);
-      [523.25, 659.25, 783.99].forEach((f, i) =>
-        tone({ freq: f, peak: 0.075, attack: 0.012, decay: 0.5, delay: i * 0.11, out: lp }),
+      [392, 587.33, 784].forEach((f, i) =>
+        note(f, { gain: 0.042, at: i * 0.13, hold: 0.1, fade: 0.7 }),
       );
-      tone({ freq: 1046.5, peak: 0.065, attack: 0.012, decay: 0.9, delay: 0.34, out: lp });
     },
 
-    remove() {
-      noise({ freq: 1400, q: 1.4, peak: 0.11, decay: 0.024 });
-      tone({ freq: 392, peak: 0.05, decay: 0.13 });
-    },
+    remove: () => note(392, { gain: 0.032, hold: 0.02, fade: 0.12 }),
   };
 
   function play(name) {

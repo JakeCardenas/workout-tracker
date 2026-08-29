@@ -80,8 +80,10 @@ body {
   color: var(--fg);
   font-family: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.55;
+  letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   transition: background 0.28s var(--ease), color 0.28s var(--ease);
 }
 
@@ -678,10 +680,10 @@ svg {
   gap: 1rem;
 }
 .view-title {
-  font-size: clamp(1.85rem, 4.5vw, 2.6rem);
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
+  font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+  font-weight: 480;
+  letter-spacing: -0.042em;
+  line-height: 1.02;
 }
 .view-sub {
   margin-top: 0.55rem;
@@ -1049,16 +1051,17 @@ svg {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 1.05rem;
+  font-weight: 480;
+  letter-spacing: -0.025em;
   padding-bottom: 0.7rem;
   border-bottom: 1px solid var(--border);
 }
 
 .ex-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
+  gap: 1rem;
 }
 
 .ex-card {
@@ -1067,8 +1070,8 @@ svg {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  padding: 1.1rem;
+  gap: 0.85rem;
+  padding: 0.85rem 0.85rem 1.05rem;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   background: var(--card);
@@ -1234,9 +1237,10 @@ svg {
   gap: 0.25rem;
 }
 .ex-name {
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: -0.015em;
+  font-size: 0.98rem;
+  font-weight: 480;
+  letter-spacing: -0.022em;
+  line-height: 1.25;
 }
 .ex-meta {
   font-size: 0.68rem;
@@ -2802,33 +2806,196 @@ svg {
   opacity: 1;
 }
 
-.art.is-playing .art-frame,
-.ex-card:hover .art .art-frame,
-.ex-card:focus-visible .art .art-frame {
-  animation: artCycle 1.5s steps(1) infinite;
+.art.is-playing .art-frame:nth-child(1),
+.ex-card:hover .art .art-frame:nth-child(1),
+.ex-card:focus-visible .art .art-frame:nth-child(1) {
+  animation: artA 2.4s ease-in-out infinite;
 }
 .art.is-playing .art-frame:nth-child(2),
-.ex-card:hover .art .art-frame:nth-child(2) {
-  animation-delay: 0.5s;
+.ex-card:hover .art .art-frame:nth-child(2),
+.ex-card:focus-visible .art .art-frame:nth-child(2) {
+  animation: artB 2.4s ease-in-out infinite;
 }
 .art.is-playing .art-frame:nth-child(3),
-.ex-card:hover .art .art-frame:nth-child(3) {
-  animation-delay: 1s;
+.ex-card:hover .art .art-frame:nth-child(3),
+.ex-card:focus-visible .art .art-frame:nth-child(3) {
+  animation: artC 2.4s ease-in-out infinite;
 }
-@keyframes artCycle {
-  0%, 33.32% { opacity: 1; }
-  33.33%, 100% { opacity: 0; }
+
+/* the frames run 1-2-3-2 so a rep travels out and back rather than
+   snapping to the start, and the edges crossfade instead of cutting */
+@keyframes artA {
+  0%, 19% { opacity: 1; }
+  27%, 92% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes artB {
+  0%, 17% { opacity: 0; }
+  25%, 44% { opacity: 1; }
+  52%, 67% { opacity: 0; }
+  75%, 94% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes artC {
+  0%, 42% { opacity: 0; }
+  50%, 69% { opacity: 1; }
+  77%, 100% { opacity: 0; }
+}
 }
 
 .art--sm {
   width: 2.6rem;
 }
 @media (prefers-reduced-motion: reduce) {
-  .art.is-playing .art-frame,
-  .ex-card:hover .art .art-frame {
-    animation: none;
+  .art .art-frame {
+    animation: none !important;
   }
   .art.is-playing .art-frame:first-child {
     opacity: 1;
+  }
+}
+
+.cal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.cal-title {
+  font-size: 1.05rem;
+  font-weight: 480;
+  letter-spacing: -0.025em;
+}
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  text-align: center;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem;
+}
+.day {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card);
+  transition: border-color 0.16s var(--ease), background 0.16s var(--ease),
+    transform 0.12s var(--ease);
+}
+.day:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.day.is-blank {
+  border: none;
+  background: none;
+  pointer-events: none;
+}
+.day-n {
+  font-size: 0.76rem;
+  color: var(--fg-dim);
+}
+.day.is-today {
+  border-color: var(--fg);
+}
+.day.is-today .day-n {
+  color: var(--fg);
+}
+.day.is-done {
+  background: var(--bg-softer);
+}
+.day.is-done .day-n {
+  color: var(--fg);
+}
+.day-dot,
+.day-ring {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.day-dot {
+  background: var(--fg);
+}
+.day-ring {
+  border: 1.5px solid var(--fg-faint);
+}
+.day.is-missed .day-ring,
+.day-ring.is-missed {
+  border-style: dashed;
+  border-color: var(--fg-dim);
+}
+.cal-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  font-size: 0.64rem;
+  color: var(--fg-faint);
+}
+.key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.next-up {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+.next-name {
+  margin-top: 0.25rem;
+  font-size: 1.2rem;
+  font-weight: 480;
+  letter-spacing: -0.025em;
+}
+.missed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 1.1rem 1.35rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+}
+.missed-title {
+  font-size: 0.95rem;
+  font-weight: 480;
+}
+.missed-sub {
+  font-size: 0.7rem;
+  color: var(--fg-faint);
+}
+
+@media (max-width: 720px) {
+  .cal-grid,
+  .cal-days {
+    gap: 0.25rem;
+  }
+  .day-n {
+    font-size: 0.68rem;
   }
 }

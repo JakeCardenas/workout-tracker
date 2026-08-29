@@ -9,6 +9,7 @@ const Store = (() => {
     draft: { name: "", items: [] },
     workouts: [],
     history: [],
+    schedule: {},
     records: {},
     recent: [],
     settings: { theme: "system", sound: true, unit: "kg" },
@@ -294,6 +295,67 @@ const Store = (() => {
     return points;
   }
 
+  const dayKey = (d) => {
+    const t = new Date(d);
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+  };
+
+  function planSession(key, plan) {
+    if (!plan) delete state.schedule[key];
+    else state.schedule[key] = plan;
+    commit("schedule");
+  }
+
+  const plannedOn = (key) => state.schedule[key] || null;
+
+  function sessionsOn(key) {
+    return state.history.filter((h) => dayKey(h.endedAt) === key);
+  }
+
+  // a planned day that has already passed with nothing logged against it
+  function missedDays(upTo = Date.now()) {
+    const today = dayKey(upTo);
+    return Object.keys(state.schedule)
+      .filter((k) => k < today && !sessionsOn(k).length)
+      .sort();
+  }
+
+  function nextPlanned(from = Date.now()) {
+    const today = dayKey(from);
+    const key = Object.keys(state.schedule)
+      .filter((k) => k >= today)
+      .sort()[0];
+    return key ? { key, plan: state.schedule[key] } : null;
+  }
+
+  // consecutive weeks, counting back from this one, with at least one session
+  function weekStreak(now = Date.now()) {
+    if (!state.history.length) return 0;
+    const startOfWeek = (t) => {
+      const d = new Date(t);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      return d.getTime();
+    };
+    const weeks = new Set(state.history.map((h) => startOfWeek(h.endedAt)));
+    const WEEK = 7 * 86400000;
+    let cursor = startOfWeek(now);
+    if (!weeks.has(cursor)) cursor -= WEEK;
+    let streak = 0;
+    while (weeks.has(cursor)) {
+      streak += 1;
+      cursor -= WEEK;
+    }
+    return streak;
+  }
+
+  function sessionsThisWeek(now = Date.now()) {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return state.history.filter((h) => h.endedAt >= d.getTime()).length;
+  }
+
   function setSetting(key, value) {
     state.settings[key] = value;
     commit("settings");
@@ -302,7 +364,7 @@ const Store = (() => {
   function mount(namespace) {
     KEY = namespace ? `${BASE}::${namespace}` : BASE;
     state = load();
-    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent");
+    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule");
   }
 
   function replace(next) {
@@ -310,12 +372,12 @@ const Store = (() => {
       settings: Object.assign(blank().settings, next.settings || {}),
       draft: Object.assign(blank().draft, next.draft || {}),
     });
-    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent");
+    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule");
   }
 
   function reset() {
     state = blank();
-    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent");
+    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule");
   }
 
   const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -358,6 +420,14 @@ const Store = (() => {
     lastPerformance,
     historyFor,
     setSetting,
+    dayKey,
+    planSession,
+    plannedOn,
+    sessionsOn,
+    missedDays,
+    nextPlanned,
+    weekStreak,
+    sessionsThisWeek,
     mount,
     replace,
     reset,

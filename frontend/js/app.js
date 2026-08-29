@@ -140,6 +140,7 @@ const App = (() => {
     "/library": { view: LibraryView, nav: "library", favorites: false },
     "/favorites": { view: LibraryView, nav: "favorites", favorites: true },
     "/build": { view: BuildView, nav: "build" },
+    "/plan": { view: PlanView, nav: "plan" },
     "/history": { view: HistoryView, nav: "history" },
     "/progress": { view: ProgressView, nav: "progress" },
   };

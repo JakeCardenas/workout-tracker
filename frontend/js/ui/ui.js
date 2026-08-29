@@ -32,6 +32,15 @@ const Fmt = {
   shortDate(ts) {
     return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   },
+  relativeAhead(key) {
+    const day = 86400000;
+    const startOf = (t) => new Date(t).setHours(0, 0, 0, 0);
+    const diff = Math.round((startOf(new Date(key + "T00:00:00")) - startOf(Date.now())) / day);
+    if (diff <= 0) return "Today";
+    if (diff === 1) return "Tomorrow";
+    if (diff < 7) return `In ${diff} days`;
+    return Fmt.shortDate(new Date(key + "T00:00:00"));
+  },
   relative(ts) {
     const day = 86400000;
     const startOf = (t) => new Date(t).setHours(0, 0, 0, 0);
