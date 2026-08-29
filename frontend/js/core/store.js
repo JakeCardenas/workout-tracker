@@ -10,6 +10,7 @@ const Store = (() => {
     workouts: [],
     history: [],
     schedule: {},
+    profile: null,
     records: {},
     recent: [],
     settings: { theme: "system", sound: true, unit: "kg" },
@@ -295,6 +296,11 @@ const Store = (() => {
     return points;
   }
 
+  function setProfile(next) {
+    state.profile = next ? Object.assign({}, state.profile, next) : null;
+    commit("profile");
+  }
+
   const dayKey = (d) => {
     const t = new Date(d);
     return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
@@ -364,7 +370,7 @@ const Store = (() => {
   function mount(namespace) {
     KEY = namespace ? `${BASE}::${namespace}` : BASE;
     state = load();
-    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule");
+    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule", "profile");
   }
 
   function replace(next) {
@@ -372,12 +378,12 @@ const Store = (() => {
       settings: Object.assign(blank().settings, next.settings || {}),
       draft: Object.assign(blank().draft, next.draft || {}),
     });
-    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule");
+    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule", "profile");
   }
 
   function reset() {
     state = blank();
-    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule");
+    commit("favorites", "workouts", "history", "draft", "settings", "records", "recent", "schedule", "profile");
   }
 
   const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -420,6 +426,7 @@ const Store = (() => {
     lastPerformance,
     historyFor,
     setSetting,
+    setProfile,
     dayKey,
     planSession,
     plannedOn,

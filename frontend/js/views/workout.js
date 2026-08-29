@@ -1,9 +1,41 @@
 const Workout = (() => {
   const RING = 2 * Math.PI * 54;
+  const SAVE = "reps.live.v1";
   let live = null;
   let raf = null;
 
   const root = () => document.getElementById("session");
+
+  // the rest timer holds a Set and a wall-clock deadline, neither of which
+  // survives a reload, so it is left behind and you come back between sets
+  function remember() {
+    if (!live || live.finished) return localStorage.removeItem(SAVE);
+    const { rest, ...rest_of } = live;
+    try {
+      localStorage.setItem(SAVE, JSON.stringify(rest_of));
+    } catch {
+      // a full disk should never take the workout down
+    }
+  }
+
+  const forget = () => localStorage.removeItem(SAVE);
+
+  function saved() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(SAVE));
+      if (!raw || !raw.exercises || !raw.exercises.length) return null;
+      return raw;
+    } catch {
+      return null;
+    }
+  }
+
+  function resume(snapshot) {
+    live = Object.assign({ rest: null, finished: false }, snapshot);
+    root().classList.add("is-on");
+    document.body.classList.add("no-scroll");
+    paint();
+  }
 
   function start(source) {
     if (!source.items || !source.items.length) {
@@ -29,6 +61,7 @@ const Workout = (() => {
     root().classList.add("is-on");
     document.body.classList.add("no-scroll");
     Sound.play("swell");
+    remember();
     paint();
   }
 
@@ -118,6 +151,7 @@ const Workout = (() => {
       });
       const bar = root().querySelector("[data-bar]");
       if (bar && e.detail.name === "weight") bar.innerHTML = Plates.strip(value);
+      remember();
     });
   }
 
@@ -139,6 +173,7 @@ const Workout = (() => {
     root().querySelector(".session-progress span").style.width = `${(doneSets() / totalSets()) * 100}%`;
     const dot = root().querySelectorAll(".set-dot")[live.setIndex];
     if (dot) dot.classList.add("is-done");
+    remember();
 
     const last = live.exIndex === live.exercises.length - 1 && live.setIndex === exercise.sets.length - 1;
     if (last) return setTimeout(finish, 260);
@@ -220,6 +255,7 @@ const Workout = (() => {
       setTimeout(() => layer.remove(), 200);
     }
     advance();
+    remember();
     paint();
   }
 
@@ -257,6 +293,7 @@ const Workout = (() => {
       prs,
     });
 
+    forget();
     Sound.play("done");
     if (prs.length) setTimeout(() => Sound.play("pr"), 700);
     paintSummary();
@@ -349,6 +386,7 @@ const Workout = (() => {
 
   function close() {
     cancelAnimationFrame(raf);
+    forget();
     root().classList.remove("is-on");
     root().innerHTML = "";
     document.body.classList.remove("no-scroll");
@@ -404,5 +442,5 @@ const Workout = (() => {
     if (!document.hidden && live && live.rest) tick();
   });
 
-  return { start, isLive: () => !!live };
+  return { start, resume, saved, forget, isLive: () => !!live };
 })();

@@ -38,6 +38,30 @@ const HomeView = (() => {
 
       ${draftCard()}
 
+      ${(() => {
+        const rec = Coach.recommend(Store.state.profile);
+        if (rec)
+          return `<section class="block">
+            <h2 class="section-head"><span>Your split</span><a class="link-btn mono" href="#/you">Change</a></h2>
+            <a class="rec-slim" href="#/build">
+              <div>
+                <p class="card-kicker mono">Recommended</p>
+                <h3 class="rec-name">${rec.best.split.name}</h3>
+              </div>
+              <span class="mono">${rec.best.asks} days a week</span>
+            </a>
+          </section>`;
+        return `<section class="block">
+          <a class="rec-slim" href="#/you">
+            <div>
+              <p class="card-kicker mono">Not sure where to start?</p>
+              <h3 class="rec-name">Get a split that fits your week</h3>
+            </div>
+            <span class="mono">Set up</span>
+          </a>
+        </section>`;
+      })()}
+
       ${last
         ? `<section class="block">
             <h2 class="section-head"><span>Last workout</span><a class="link-btn mono" href="#/history">All history</a></h2>
@@ -141,6 +165,8 @@ const App = (() => {
     "/favorites": { view: LibraryView, nav: "favorites", favorites: true },
     "/build": { view: BuildView, nav: "build" },
     "/plan": { view: PlanView, nav: "plan" },
+    "/you": { view: YouView, nav: "you" },
+    "/settings": { view: SettingsView, nav: "settings" },
     "/history": { view: HistoryView, nav: "history" },
     "/progress": { view: ProgressView, nav: "progress" },
   };
@@ -273,6 +299,15 @@ const App = (() => {
     });
   }
 
+  function syncShell() {
+    syncUnitButtons();
+    syncSoundButtons();
+    syncBadges();
+    document.querySelectorAll("[data-install-cta]").forEach((el) => {
+      el.hidden = Shell.standalone() || !Shell.canInstall();
+    });
+  }
+
   function syncUnitButtons() {
     document.querySelectorAll("[data-unit-toggle]").forEach((b) => {
       b.textContent = Units.label().toUpperCase();
@@ -325,6 +360,64 @@ const App = (() => {
       },
       true,
     );
+  }
+
+  function offerResume() {
+    const snapshot = Workout.saved();
+    if (!snapshot) return;
+    const done = snapshot.exercises.reduce(
+      (t, e) => t + e.sets.filter((x) => x.done).length, 0,
+    );
+    const total = snapshot.exercises.reduce((t, e) => t + e.sets.length, 0);
+
+    Sheet.open({
+      title: "Continue workout",
+      body: `<div class="confirm">
+        <h2 class="confirm-title">Pick up where you left off?</h2>
+        <p class="confirm-sub">${esc(snapshot.name)} — ${done} of ${total} sets done.</p>
+        <div class="confirm-actions">
+          <button class="btn btn--primary" type="button" data-resume>Continue</button>
+          <button class="btn" type="button" data-discard>Discard</button>
+        </div>
+      </div>`,
+      onMount(scope) {
+        scope.querySelector("[data-resume]").addEventListener("click", () => {
+          Sheet.close();
+          Workout.resume(snapshot);
+        });
+        scope.querySelector("[data-discard]").addEventListener("click", () => {
+          Workout.forget();
+          Sheet.close();
+        });
+      },
+    });
+  }
+
+  // desktop shortcuts, kept out of the browser's way
+  function wireKeys() {
+    document.addEventListener("keydown", (e) => {
+      if (Workout.isLive()) return;
+      const typing = e.target.matches("input, textarea, select");
+
+      if (e.key === "/" && !typing) {
+        const box = document.querySelector("[data-search]");
+        if (box) {
+          e.preventDefault();
+          if (currentPath !== "/library") location.hash = "#/library";
+          setTimeout(() => document.querySelector("[data-search]").focus(), 60);
+        }
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        location.hash = "#/library";
+        setTimeout(() => {
+          const box = document.querySelector("[data-search]");
+          if (box) box.focus();
+        }, 80);
+      }
+    });
   }
 
   function boot() {
@@ -403,8 +496,12 @@ const App = (() => {
     );
 
     wireSounds();
+    wireKeys();
+    Shell.start();
     paint(false);
     document.body.classList.add("is-ready");
+    syncShell();
+    offerResume();
 
 
 

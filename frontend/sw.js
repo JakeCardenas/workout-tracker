@@ -1,36 +1,43 @@
-const CACHE = "reps-v34";
+const CACHE = "reps-v36";
 
 const SHELL = [
   "./",
   "./index.html",
   "./site.webmanifest",
-  "./css/style.css?v=34",
-  "./js/data/exercises.js?v=34",
-  "./js/data/splits.js?v=34",
-  "./js/ui/sound.js?v=34",
-  "./js/ui/icons.js?v=34",
-  "./js/ui/art.js?v=34",
-  "./js/core/units.js?v=34",
-  "./js/core/plates.js?v=34",
-  "./js/core/backup.js?v=34",
-  "./js/core/store.js?v=34",
-  "./js/ui/ui.js?v=34",
-  "./js/views/library.js?v=34",
-  "./js/views/builder.js?v=34",
-  "./js/views/workout.js?v=34",
-  "./js/views/progress.js?v=34",
-  "./js/views/plan.js?v=34",
-  "./js/app.js?v=34",
+  "./css/style.css?v=36",
+  "./js/data/exercises.js?v=36",
+  "./js/data/splits.js?v=36",
+  "./js/ui/sound.js?v=36",
+  "./js/ui/icons.js?v=36",
+  "./js/ui/art.js?v=36",
+  "./js/core/units.js?v=36",
+  "./js/core/plates.js?v=36",
+  "./js/core/coach.js?v=36",
+  "./js/core/shell.js?v=36",
+  "./js/core/backup.js?v=36",
+  "./js/core/store.js?v=36",
+  "./js/ui/ui.js?v=36",
+  "./js/views/library.js?v=36",
+  "./js/views/builder.js?v=36",
+  "./js/views/workout.js?v=36",
+  "./js/views/progress.js?v=36",
+  "./js/views/plan.js?v=36",
+  "./js/views/you.js?v=36",
+  "./js/views/settings.js?v=36",
+  "./js/app.js?v=36",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
 ];
+
+self.addEventListener("message", (e) => {
+  if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
+});
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches
       .open(CACHE)
-      .then((c) => c.addAll(SHELL))
-      .then(() => self.skipWaiting()),
+      .then((c) => c.addAll(SHELL)),
   );
 });
 

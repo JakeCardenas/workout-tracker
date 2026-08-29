@@ -408,5 +408,5 @@ const BuildView = (() => {
     });
   }
 
-  return { render, mount };
+  return { render, mount, applySplit };
 })();
