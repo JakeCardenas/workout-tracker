@@ -363,7 +363,7 @@ const Workout = (() => {
   function replaceExercise() {
     const { exercise, meta } = current();
     const taken = live.exercises.map((e) => e.exId);
-    const options = alternatives(meta, taken);
+    const options = Coach.alternatives(meta.id, { exclude: taken });
     if (!options.length) return Toast.show("No close alternative available");
 
     Sheet.open({
@@ -392,20 +392,6 @@ const Workout = (() => {
         );
       },
     });
-  }
-
-  // closest first: shares the most primary muscles, then the same movement group
-  function alternatives(meta, taken) {
-    return EXERCISES.filter((ex) => ex.id !== meta.id && !taken.includes(ex.id))
-      .map((ex) => {
-        const shared = ex.primary.filter((m) => meta.primary.includes(m)).length;
-        const group = ex.group === meta.group ? 1 : 0;
-        return { ex, score: shared * 3 + group };
-      })
-      .filter((row) => row.score >= 3)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6)
-      .map((row) => row.ex);
   }
 
   function swapTo(exId) {

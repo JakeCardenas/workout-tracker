@@ -156,6 +156,22 @@ const Coach = (() => {
     };
   }
 
+
+  // closest first: shares the most primary muscles, then the same group
+  function alternatives(exId, { exclude = [], limit = 6 } = {}) {
+    const meta = EXERCISE_BY_ID[exId];
+    if (!meta) return [];
+    return EXERCISES.filter((ex) => ex.id !== exId && !exclude.includes(ex.id))
+      .map((ex) => {
+        const shared = ex.primary.filter((m) => meta.primary.includes(m)).length;
+        return { ex, score: shared * 3 + (ex.group === meta.group ? 1 : 0) };
+      })
+      .filter((row) => row.score >= 3)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((row) => row.ex);
+  }
+
   // only meaningful next to a barbell lift, and only if a weight is on file
   function strengthRatio(profile, exId) {
     if (!profile || !profile.weightKg) return null;
@@ -164,5 +180,5 @@ const Coach = (() => {
     return +(rec.bestWeight / profile.weightKg).toFixed(2);
   }
 
-  return { LEVELS, recommend, why, starters, strengthRatio, suggest, coverage, canDo, substitute, adaptDay };
+  return { LEVELS, recommend, why, starters, strengthRatio, suggest, coverage, canDo, substitute, adaptDay, alternatives };
 })();

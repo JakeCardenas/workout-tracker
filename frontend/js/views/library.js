@@ -54,6 +54,56 @@ const ExerciseSheet = (() => {
     return `<dl class="stat-row">${cells.join("")}</dl>`;
   }
 
+  function historyBlock(ex) {
+    const series = Metrics.oneRepMaxSeries(ex.id);
+    const sessions = Store.historyFor(ex.id).slice(-5).reverse();
+    if (!sessions.length) return "";
+
+    const chart =
+      series.length > 1 && ex.unit !== "sec" && ex.equipment !== "Bodyweight"
+        ? `<div class="detail-chart">
+            ${Charts.line(series.map((p) => ({ at: p.at, value: +Units.fromKg(p.value).toFixed(1) })))}
+            <p class="chart-caption mono">Estimated 1RM · ${Fmt.weight(series[0].value, ex.unit)} → ${Fmt.weight(series[series.length - 1].value, ex.unit)}</p>
+          </div>`
+        : "";
+
+    return `<section class="detail-section">
+      <h3 class="section-label mono">Your history</h3>
+      ${chart}
+      <ul class="ex-history mono">
+        ${sessions
+          .map(
+            (p) => `<li>
+              <span>${Fmt.date(p.at)}</span>
+              <span>${Fmt.weight(p.weight, ex.unit)} × ${p.reps}</span>
+              <span class="ex-history-vol">${Fmt.volume(p.volume)}</span>
+            </li>`,
+          )
+          .join("")}
+      </ul>
+    </section>`;
+  }
+
+  function alternativesBlock(ex) {
+    const options = Coach.alternatives(ex.id, { limit: 4 });
+    if (!options.length) return "";
+
+    return `<section class="detail-section">
+      <h3 class="section-label mono">Alternatives</h3>
+      <div class="alt-strip">
+        ${options
+          .map(
+            (alt) => `<button class="alt-card" type="button" data-open-ex="${alt.id}">
+              <span class="alt-art">${Art.render(alt.id)}</span>
+              <span class="alt-name">${esc(alt.name)}</span>
+              <span class="alt-meta mono">${alt.equipment}</span>
+            </button>`,
+          )
+          .join("")}
+      </div>
+    </section>`;
+  }
+
   function body(ex) {
     const cfg = Store.config(ex.id);
     const s = stepsFor(ex);
@@ -112,6 +162,9 @@ const ExerciseSheet = (() => {
         <ul class="notes notes--warn">${ex.mistakes.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
       </section>` : ""}
 
+      ${historyBlock(ex)}
+      ${alternativesBlock(ex)}
+
       <section class="config" data-config="${ex.id}">
         <h3 class="section-label mono">Your workout</h3>
         <div class="config-grid">
@@ -150,6 +203,13 @@ const ExerciseSheet = (() => {
       size: "sheet-panel--wide",
       body: body(ex),
       onMount(scope) {
+        // only four, and inside a panel the observer cannot see past — paint now
+        scope.querySelectorAll(".alt-card .art").forEach(Art.paint);
+
+        scope.querySelectorAll("[data-open-ex]").forEach((btn) =>
+          btn.addEventListener("click", () => open(btn.dataset.openEx)),
+        );
+
         scope.querySelector("[data-flip]").addEventListener("click", () => {
           const fig = scope.querySelector("[data-art]");
           const next = fig.dataset.view === "front" ? "back" : "front";
@@ -192,7 +252,30 @@ const ExerciseSheet = (() => {
 })();
 
 const LibraryView = (() => {
-  const filters = { q: "", groups: new Set(), equip: new Set(), levels: new Set() };
+  const filters = { q: "", groups: new Set(), equip: new Set(), levels: new Set(), sort: "group" };
+
+  const SORTS = {
+    group: { label: "Muscle group", apply: (list) => list },
+    name: { label: "A–Z", apply: (list) => [...list].sort((a, b) => a.name.localeCompare(b.name)) },
+    level: {
+      label: "Easiest first",
+      apply: (list) => {
+        const rank = { Beginner: 0, Intermediate: 1, Advanced: 2 };
+        return [...list].sort((a, b) => rank[a.level] - rank[b.level] || a.name.localeCompare(b.name));
+      },
+    },
+    used: {
+      label: "Recently used",
+      apply: (list) => {
+        const order = Store.state.recent;
+        return [...list].sort((a, b) => {
+          const ai = order.indexOf(a.id);
+          const bi = order.indexOf(b.id);
+          return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
+        });
+      },
+    },
+  };
   let favoritesOnly = false;
 
   function matches(ex) {
@@ -229,7 +312,7 @@ const LibraryView = (() => {
       .join("")}</div>`;
 
   function results() {
-    const list = EXERCISES.filter(matches);
+    const list = SORTS[filters.sort].apply(EXERCISES.filter(matches));
     if (!list.length)
       return `<div class="empty">
         <p class="empty-title">Nothing matches that</p>
@@ -237,7 +320,7 @@ const LibraryView = (() => {
         <button class="btn" type="button" data-clear>Clear filters</button>
       </div>`;
 
-    if (filters.groups.size || filters.q || favoritesOnly)
+    if (filters.sort !== "group" || filters.groups.size || filters.q || favoritesOnly)
       return `<div class="ex-grid">${list.map(exerciseCard).join("")}</div>`;
 
     return GROUPS.map((group) => {
@@ -270,6 +353,17 @@ const LibraryView = (() => {
       </div>
 
       <div class="filters">
+        <div class="filter-row">
+          <span class="filter-key mono">Sort</span>
+          <div class="seg mono">
+            ${Object.entries(SORTS)
+              .map(
+                ([key, s]) =>
+                  `<button type="button" class="seg-btn${filters.sort === key ? " is-on" : ""}" data-sort="${key}">${s.label}</button>`,
+              )
+              .join("")}
+          </div>
+        </div>
         ${chipRow("Muscle", GROUPS, filters.groups, "groups")}
         ${chipRow("Equipment", EQUIPMENT, filters.equip, "equip")}
         ${chipRow("Level", LEVELS, filters.levels, "levels")}
@@ -296,6 +390,15 @@ const LibraryView = (() => {
     });
 
     root.addEventListener("click", (e) => {
+      const sort = e.target.closest("[data-sort]");
+      if (sort) {
+        filters.sort = sort.dataset.sort;
+        root.querySelectorAll("[data-sort]").forEach((b) => b.classList.toggle("is-on", b === sort));
+        repaintResults(root);
+        Sound.play("tap");
+        return;
+      }
+
       const chip = e.target.closest("[data-filter]");
       if (chip) {
         const set = filters[chip.dataset.filter];
