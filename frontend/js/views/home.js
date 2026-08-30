@@ -6,6 +6,61 @@ const HomeView = (() => {
     return "Good evening";
   }
 
+  const LINES = [
+    "Show up and the rest sorts itself out.",
+    "The set you do not feel like doing is usually the one that counts.",
+    "Small jumps, kept up, beat big jumps abandoned.",
+    "Form first. The weight will follow.",
+    "You do not have to be fresh. You have to start.",
+    "Log it honestly and the numbers will tell you the truth.",
+    "Rest is part of the programme, not a break from it.",
+  ];
+
+  // fixed for the day, so a repaint does not shuffle the words under you
+  function line() {
+    const day = Math.floor(Date.now() / 86400000);
+    return LINES[day % LINES.length];
+  }
+
+  function week() {
+    const today = new Date();
+    const cells = [];
+    for (let back = 6; back >= 0; back--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - back);
+      const key = Store.dayKey(d.getTime());
+      const trained = Store.sessionsOn(key).length > 0;
+      const planned = !!Store.plannedOn(key);
+      cells.push(`<div class="wk-cell${trained ? " is-done" : planned ? " is-planned" : ""}${back === 0 ? " is-today" : ""}">
+        <span class="mono wk-day">${"SMTWTFS"[d.getDay()]}</span>
+        <span class="wk-dot"></span>
+      </div>`);
+    }
+    return `<section class="block week-strip">
+      <h2 class="section-head"><span>This week</span><a class="link-btn mono" href="#/plan">Plan</a></h2>
+      <div class="wk-row">${cells.join("")}</div>
+    </section>`;
+  }
+
+  function recoveryPreview() {
+    if (!Store.state.history.length) return "";
+    const needy = Recovery.neediest(3).filter((m) => m.ready < 0.95);
+    return `<section class="block">
+      <h2 class="section-head"><span>Recovery</span><a class="link-btn mono" href="#/progress">Detail</a></h2>
+      <div class="rec-preview">
+        ${RecoveryMap.render("is-compact")}
+        <div class="rec-copy">
+          ${needy.length
+            ? `<ul class="rec-list mono">${needy
+                .map((m) => `<li><span>${m.name}</span><span>${Recovery.label(m.ready)}</span></li>`)
+                .join("")}</ul>`
+            : `<p class="rec-fresh mono">Everything is fresh. Good day to go hard.</p>`}
+          <p class="rec-note">A training estimate from recent volume, not medical advice.</p>
+        </div>
+      </div>
+    </section>`;
+  }
+
   function estimate(items) {
     return Fmt.duration(draftTotals(items).duration);
   }
@@ -124,13 +179,15 @@ const HomeView = (() => {
 
     return `
       <header class="home-head">
-        <p class="home-greet mono">${greeting()}</p>
+        <p class="home-greet mono">${greeting()} · ${Fmt.date(Date.now())}</p>
         <h1 class="home-title">Ready to train?</h1>
+        <p class="home-line">${line()}</p>
       </header>
 
       ${resumeCard()}
       ${todayCard()}
       ${stats()}
+      ${week()}
 
       ${workouts.length
         ? `<section class="block">
@@ -163,6 +220,8 @@ const HomeView = (() => {
             </article>
           </section>`
         : ""}
+
+      ${recoveryPreview()}
 
       ${recent.length
         ? `<section class="block">

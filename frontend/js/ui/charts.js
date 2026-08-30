@@ -67,13 +67,24 @@ const Charts = (() => {
     </ul>`;
   }
 
-  function spark(values) {
-    if (values.length < 2) return "";
-    const { lo, hi } = scale(values, 0.2);
-    const path = values
-      .map((v, i) => `${i ? "L" : "M"}${((i / (values.length - 1)) * 100).toFixed(1)} ${(28 - ((v - lo) / (hi - lo)) * 28).toFixed(1)}`)
-      .join(" ");
-    return `<svg class="spark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" /></svg>`;
+  function spark(points, key = "weight") {
+    if (points.length < 2) return `<span class="spark-empty mono">—</span>`;
+    const values = points.map((p) => p[key]);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const span = max - min || 1;
+    const w = 120;
+    const hgt = 34;
+    const step = w / (points.length - 1);
+    const coords = values.map((v, i) => [i * step, hgt - ((v - min) / span) * (hgt - 6) - 3]);
+    const line = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+    const [lx, ly] = coords[coords.length - 1];
+    const area = `0,${hgt} ${line} ${w},${hgt}`;
+    return `<svg class="spark" viewBox="0 0 ${w} ${hgt}" preserveAspectRatio="none" aria-hidden="true">
+      <polygon class="spark-area" points="${area}" />
+      <polyline class="spark-line" points="${line}" />
+      <circle class="spark-dot" cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="2.6" />
+    </svg>`;
   }
 
   return { line, bars, split, spark };

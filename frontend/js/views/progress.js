@@ -1,23 +1,3 @@
-function sparkline(points, key = "weight") {
-  if (points.length < 2) return `<span class="spark-empty mono">—</span>`;
-  const values = points.map((p) => p[key]);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-  const w = 120;
-  const hgt = 34;
-  const step = w / (points.length - 1);
-  const coords = values.map((v, i) => [i * step, hgt - ((v - min) / span) * (hgt - 6) - 3]);
-  const line = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const [lx, ly] = coords[coords.length - 1];
-  const area = `0,${hgt} ${line} ${w},${hgt}`;
-  return `<svg class="spark" viewBox="0 0 ${w} ${hgt}" preserveAspectRatio="none" aria-hidden="true">
-    <polygon class="spark-area" points="${area}" />
-    <polyline class="spark-line" points="${line}" />
-    <circle class="spark-dot" cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="2.6" />
-  </svg>`;
-}
-
 const HistoryView = (() => {
   function sessionCard(s) {
     return `
@@ -189,7 +169,7 @@ const ProgressView = (() => {
           ${latest.weight >= (rec ? rec.bestWeight : 0) && points.length > 1 && delta > 0 ? `<span class="pr-badge mono">PR</span>` : ""}
         </div>
 
-        <div class="prog-spark">${sparkline(points)}</div>
+        <div class="prog-spark">${Charts.spark(points)}</div>
 
         <dl class="prog-best mono">
           <div><dt>Best</dt><dd>${rec && rec.bestWeight ? Fmt.weight(rec.bestWeight, meta.unit) : "—"}</dd></div>
@@ -200,6 +180,129 @@ const ProgressView = (() => {
           <div><dt>Volume</dt><dd>${Fmt.volume(volume)}</dd></div>
         </dl>
       </article>`;
+  }
+
+  function lifetime() {
+    const h = Store.state.history;
+    const totals = h.reduce(
+      (t, s) => {
+        const st = Metrics.sessionStats(s);
+        t.volume += st.volume;
+        t.sets += st.sets;
+        t.minutes += st.minutes;
+        return t;
+      },
+      { volume: 0, sets: 0, minutes: 0 },
+    );
+
+    const cell = (label, value) =>
+      `<div><dt>${label}</dt><dd>${value}</dd></div>`;
+
+    return `<dl class="totals mono">
+      ${cell("Workouts", h.length)}
+      ${cell("Training time", Fmt.duration(totals.minutes * 60000))}
+      ${cell("Total sets", totals.sets)}
+      ${cell("Total volume", Fmt.volume(totals.volume))}
+      ${cell("Streak", `${Store.weekStreak()} wk`)}
+      ${cell("This week", Store.sessionsThisWeek())}
+    </dl>`;
+  }
+
+  function volumeBlock() {
+    const weeks = Metrics.weeklyVolume(8).map((w, i, all) => ({
+      value: w.value,
+      label: i === all.length - 1 ? "now" : `-${all.length - 1 - i}`,
+    }));
+    const trained = weeks.filter((w) => w.value > 0).length;
+
+    return `<section class="block">
+      <h2 class="section-head"><span>Weekly volume</span><span class="mono view-sub">${trained} of 8 weeks</span></h2>
+      ${Charts.bars(weeks, { format: (v) => Fmt.volume(v) })}
+    </section>`;
+  }
+
+  function strengthBlock() {
+    const score = Metrics.strengthScore(Store.state.profile);
+    if (!score) {
+      return `<section class="block">
+        <h2 class="section-head"><span>Strength score</span></h2>
+        <p class="chart-empty mono">Add your bodyweight in Profile and log a main lift to see this.</p>
+      </section>`;
+    }
+
+    return `<section class="block">
+      <h2 class="section-head"><span>Strength score</span><span class="mono view-sub">${score.logged} of ${score.of} lifts</span></h2>
+      <div class="score-row">
+        <div class="score-dial">
+          <span class="score-num" data-count="${score.score}">0</span>
+          <span class="score-of mono">/ 1000</span>
+        </div>
+        <ul class="chart-split">
+          ${score.lifts
+            .map(
+              (l) => `<li>
+                <span class="split-key mono">${esc(l.name)}</span>
+                <span class="split-track"><i style="width:${Math.round(l.share * 100)}%"></i></span>
+                <span class="split-val mono">${l.ratio}×</span>
+              </li>`,
+            )
+            .join("")}
+        </ul>
+      </div>
+      <p class="rec-note">Best estimated 1RM as a multiple of your bodyweight, averaged across the main lifts. A yardstick for your own progress.</p>
+    </section>`;
+  }
+
+  function balanceBlock() {
+    const rows = Metrics.balance();
+    if (!rows.length) return "";
+
+    return `<section class="block">
+      <h2 class="section-head"><span>Muscle balance</span><span class="mono view-sub">last 4 weeks</span></h2>
+      <ul class="balance-list">
+        ${rows
+          .map(
+            (r) => `<li class="balance-row is-${r.state}">
+              <div class="balance-head mono">
+                <span>${r.aName}</span>
+                <span class="balance-state">${r.state === "even" ? "even" : r.state === "slight" ? "slightly off" : "lopsided"}</span>
+                <span>${r.bName}</span>
+              </div>
+              <div class="balance-bar"><i style="width:${Math.round(r.share * 100)}%"></i></div>
+            </li>`,
+          )
+          .join("")}
+      </ul>
+    </section>`;
+  }
+
+  function recoveryBlock() {
+    return `<section class="block">
+      <h2 class="section-head"><span>Muscle recovery</span></h2>
+      ${RecoveryMap.render()}
+      ${RecoveryMap.legend()}
+      <ul class="chart-split rec-rows">${RecoveryMap.rows(8)}</ul>
+      <p class="rec-note">Estimated from how much each muscle has been worked and how long ago. A planning aid, not medical advice.</p>
+    </section>`;
+  }
+
+  function deloadBlock() {
+    const hint = Metrics.deloadHint();
+    if (!hint) return "";
+    return `<section class="note-card is-${hint.tone}">
+      <p class="card-kicker mono">Worth considering</p>
+      <p>${hint.text}</p>
+    </section>`;
+  }
+
+  function groupBlock() {
+    const totals = Metrics.volumeByGroup(Store.state.history);
+    const rows = Object.entries(totals).map(([label, value]) => ({ label, value }));
+    if (!rows.length) return "";
+    return `<section class="block">
+      <h2 class="section-head"><span>Where the work goes</span></h2>
+      ${Charts.split(rows)}
+    </section>`;
   }
 
   function render() {
@@ -228,10 +331,25 @@ const ProgressView = (() => {
         <h1 class="view-title">Progress</h1>
         <p class="view-sub">${tracked.length} movement${tracked.length > 1 ? "s" : ""} tracked across your history.</p>
       </div></div>
-      <div class="prog-list">${tracked.map(row).join("")}</div>`;
+
+      ${lifetime()}
+      ${deloadBlock()}
+      ${volumeBlock()}
+      ${strengthBlock()}
+      ${balanceBlock()}
+      ${groupBlock()}
+      ${recoveryBlock()}
+
+      <section class="block">
+        <h2 class="section-head"><span>Per movement</span></h2>
+        <div class="prog-list">${tracked.map(row).join("")}</div>
+      </section>`;
   }
 
   function mount(root) {
+    root.querySelectorAll("[data-count]").forEach((el) =>
+      countUp(el, +el.dataset.count),
+    );
     root.addEventListener("click", (e) => {
       const r = e.target.closest("[data-ex]");
       if (r) ExerciseSheet.open(r.dataset.ex);
