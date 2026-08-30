@@ -81,15 +81,6 @@ const Recovery = (() => {
   const label = (ready) =>
     ready >= 0.95 ? "Fresh" : ready >= 0.6 ? "Recovering" : ready >= 0.3 ? "Sore" : "Worked";
 
-  function freshest(limit = 3) {
-    const m = map();
-    return Object.entries(m)
-      .filter(([, v]) => v.lastAt)
-      .sort((a, b) => b[1].ready - a[1].ready)
-      .slice(0, limit)
-      .map(([key, v]) => ({ key, name: MUSCLES[key], ...v }));
-  }
-
   function neediest(limit = 3) {
     const m = map();
     return Object.entries(m)
@@ -111,5 +102,5 @@ const Recovery = (() => {
     return +(total / touched.size).toFixed(2);
   }
 
-  return { map, label, freshest, neediest, forWorkout, WINDOW };
+  return { map, label, neediest, forWorkout };
 })();

@@ -117,5 +117,5 @@ const WorkoutSets = (() => {
     });
   }
 
-  return { rail, workingNumber, previousBlock, typeSheet, offerWarmup, warmupPlan };
+  return { rail, workingNumber, previousBlock, typeSheet, offerWarmup };
 })();

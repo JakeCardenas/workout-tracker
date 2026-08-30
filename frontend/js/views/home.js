@@ -61,6 +61,18 @@ const HomeView = (() => {
     </section>`;
   }
 
+  function readyLine(items) {
+    if (!items.length || !Store.state.history.length) return "";
+    const ready = Recovery.forWorkout(items);
+    const text =
+      ready > 0.85
+        ? "Everything this hits is fresh."
+        : ready > 0.55
+          ? "Mostly recovered — expect a solid session."
+          : "Some of this is still recovering. Go by feel.";
+    return `<p class="ready-line mono">${text}</p>`;
+  }
+
   function estimate(items) {
     return Fmt.duration(draftTotals(items).duration);
   }
@@ -115,6 +127,7 @@ const HomeView = (() => {
           <p class="card-kicker mono">Today</p>
           <h2 class="hero-card-title">${esc(planned.name)}</h2>
           <p class="hero-card-meta mono">${day ? day.focus : muscles(asDraft)}</p>
+          ${readyLine(asDraft)}
           <dl class="mini-stats mono">
             <div><dt>Exercises</dt><dd>${asDraft.length}</dd></div>
             <div><dt>Sets</dt><dd>${draftTotals(asDraft).sets}</dd></div>
@@ -133,6 +146,7 @@ const HomeView = (() => {
           <p class="card-kicker mono">Ready to go</p>
           <h2 class="hero-card-title">${esc(draft.name || "Untitled workout")}</h2>
           <p class="hero-card-meta mono">${muscles(draft.items)}</p>
+          ${readyLine(draft.items)}
           <dl class="mini-stats mono">
             <div><dt>Exercises</dt><dd>${draft.items.length}</dd></div>
             <div><dt>Sets</dt><dd>${draftTotals(draft.items).sets}</dd></div>

@@ -5167,3 +5167,9 @@ body.is-splashing .tabbar {
   text-transform: uppercase;
   color: var(--fg-faint);
 }
+
+.ready-line {
+  margin-top: 0.5rem;
+  font-size: 0.68rem;
+  color: var(--fg-faint);
+}

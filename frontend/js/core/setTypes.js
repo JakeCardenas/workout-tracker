@@ -30,10 +30,9 @@ const SetTypes = (() => {
 
   const of = (set) => META[set && set.type] || META.normal;
   const counts = (set) => (set.type || "normal") !== "warmup";
-  const next = (type) => ORDER[(ORDER.indexOf(type || "normal") + 1) % ORDER.length];
 
   // a drop set follows straight on, so it should not open a rest window
   const restsAfter = (set) => (set.type || "normal") !== "drop";
 
-  return { ORDER, META, of, counts, next, restsAfter };
+  return { ORDER, META, of, counts, restsAfter };
 })();
