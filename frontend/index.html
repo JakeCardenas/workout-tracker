@@ -8,10 +8,10 @@
       name="description"
       content="An exercise library, workout planner and set-by-set tracker in one. Browse 36 movements, build a workout, run it with a rest timer and track every personal record."
     />
-    <link rel="manifest" href="./site.webmanifest?v=64" />
-    <link rel="icon" href="./assets/brand/logo.svg?v=64" type="image/svg+xml" />
-    <link rel="icon" href="./assets/icons/icon-32.png?v=64" type="image/png" sizes="32x32" />
-    <link rel="apple-touch-icon" href="./assets/icons/icon-180.png?v=64" />
+    <link rel="manifest" href="./site.webmanifest?v=65" />
+    <link rel="icon" href="./assets/brand/logo.svg?v=65" type="image/svg+xml" />
+    <link rel="icon" href="./assets/icons/icon-32.png?v=65" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="./assets/icons/icon-180.png?v=65" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Reps" />
@@ -27,7 +27,7 @@
       href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@300..600&display=swap"
       rel="stylesheet"
     />
-    <link href="./css/style.css?v=64" rel="stylesheet" />
+    <link href="./css/style.css?v=65" rel="stylesheet" />
   </head>
   <body>
     <a class="skip-link" href="#view">Skip to content</a>
@@ -55,15 +55,23 @@
         <p class="side-tag mono">Train smarter.<br />Track every set.</p>
 
         <nav class="side-nav mono" aria-label="Sections">
+          <span class="nav-group mono">Train</span>
           <a class="nav-link" href="#/" data-nav="home"><span class="nav-ico"></span>Home</a>
-          <a class="nav-link" href="#/library" data-nav="library"><span class="nav-ico"></span>Library</a>
-          <a class="nav-link" href="#/favorites" data-nav="favorites"><span class="nav-ico"></span>Favorites<span class="badge mono" data-fav-badge hidden>0</span></a>
-          <a class="nav-link" href="#/build" data-nav="build"><span class="nav-ico"></span>Build<span class="badge mono" data-build-badge hidden>0</span></a>
+          <a class="nav-link" href="#/build" data-nav="build"><span class="nav-ico"></span>Workouts<span class="badge mono" data-build-badge hidden>0</span></a>
           <a class="nav-link" href="#/plan" data-nav="plan"><span class="nav-ico"></span>Plan</a>
-          <a class="nav-link" href="#/you" data-nav="you"><span class="nav-ico"></span>You</a>
-          <a class="nav-link" href="#/settings" data-nav="settings"><span class="nav-ico"></span>Settings</a>
-          <a class="nav-link" href="#/history" data-nav="history"><span class="nav-ico"></span>History</a>
+
+          <span class="nav-group mono">Learn</span>
+          <a class="nav-link" href="#/library" data-nav="library"><span class="nav-ico"></span>Exercises</a>
+          <a class="nav-link" href="#/favorites" data-nav="favorites"><span class="nav-ico"></span>Favorites<span class="badge mono" data-fav-badge hidden>0</span></a>
+
+          <span class="nav-group mono">Track</span>
           <a class="nav-link" href="#/progress" data-nav="progress"><span class="nav-ico"></span>Progress</a>
+          <a class="nav-link" href="#/history" data-nav="history"><span class="nav-ico"></span>History</a>
+          <a class="nav-link" href="#/body" data-nav="body"><span class="nav-ico"></span>Body</a>
+
+          <span class="nav-group mono">You</span>
+          <a class="nav-link" href="#/you" data-nav="you"><span class="nav-ico"></span>Profile</a>
+          <a class="nav-link" href="#/settings" data-nav="settings"><span class="nav-ico"></span>Settings</a>
         </nav>
 
         <div class="side-foot">
@@ -102,20 +110,20 @@
       </a>
       <a class="tab" href="#/library" data-nav="library">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="4" width="7" height="16" rx="1.5" /><rect x="13.5" y="4" width="7" height="7" rx="1.5" /><rect x="13.5" y="13" width="7" height="7" rx="1.5" /></svg>
-        Library
+        Exercises
       </a>
       <a class="tab" href="#/build" data-nav="build">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h10M4 12h16M4 17h7" /><circle cx="18" cy="7" r="2" /><circle cx="14" cy="17" r="2" /></svg>
-        Build
+        Workouts
         <span class="badge mono" data-build-badge hidden>0</span>
-      </a>
-      <a class="tab" href="#/plan" data-nav="plan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M8 3v4M16 3v4M3.5 10h17" /></svg>
-        Plan
       </a>
       <a class="tab" href="#/progress" data-nav="progress">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16" /><path d="M8 15l3.5-4 3 2.5L20 7" /></svg>
         Progress
+      </a>
+      <a class="tab" href="#/you" data-nav="you">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6" /><path d="M5 20a7 7 0 0114 0" /></svg>
+        You
       </a>
     </nav>
     <div class="splash" id="splash"></div>
@@ -124,37 +132,38 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="session" id="session" role="dialog" aria-modal="true" aria-label="Workout in progress"></div>
 
-    <script src="./js/data/exercises.js?v=64"></script>
-    <script src="./js/data/splits.js?v=64"></script>
-    <script src="./js/ui/sound.js?v=64"></script>
-    <script src="./js/ui/icons.js?v=64"></script>
-    <script src="./js/ui/muscleMap.js?v=64"></script>
-    <script src="./js/ui/art.js?v=64"></script>
-    <script src="./js/ui/charts.js?v=64"></script>
-    <script src="./js/ui/recoveryMap.js?v=64"></script>
-    <script src="./js/ui/splash.js?v=64"></script>
-    <script src="./js/ui/picker.js?v=64"></script>
-    <script src="./js/core/units.js?v=64"></script>
-    <script src="./js/core/plates.js?v=64"></script>
-    <script src="./js/core/setTypes.js?v=64"></script>
-    <script src="./js/core/coach.js?v=64"></script>
-    <script src="./js/core/metrics.js?v=64"></script>
-    <script src="./js/core/recovery.js?v=64"></script>
-    <script src="./js/core/haptics.js?v=64"></script>
-    <script src="./js/core/shell.js?v=64"></script>
-    <script src="./js/core/backup.js?v=64"></script>
-    <script src="./js/core/store.js?v=64"></script>
-    <script src="./js/ui/ui.js?v=64"></script>
-    <script src="./js/views/library.js?v=64"></script>
-    <script src="./js/views/builder.js?v=64"></script>
-    <script src="./js/views/workoutSets.js?v=64"></script>
-    <script src="./js/views/workout.js?v=64"></script>
-    <script src="./js/views/progress.js?v=64"></script>
-    <script src="./js/views/plan.js?v=64"></script>
-    <script src="./js/views/onboarding.js?v=64"></script>
-    <script src="./js/views/you.js?v=64"></script>
-    <script src="./js/views/settings.js?v=64"></script>
-    <script src="./js/views/home.js?v=64"></script>
-    <script src="./js/app.js?v=64"></script>
+    <script src="./js/data/exercises.js?v=65"></script>
+    <script src="./js/data/splits.js?v=65"></script>
+    <script src="./js/ui/sound.js?v=65"></script>
+    <script src="./js/ui/icons.js?v=65"></script>
+    <script src="./js/ui/muscleMap.js?v=65"></script>
+    <script src="./js/ui/art.js?v=65"></script>
+    <script src="./js/ui/charts.js?v=65"></script>
+    <script src="./js/ui/recoveryMap.js?v=65"></script>
+    <script src="./js/ui/splash.js?v=65"></script>
+    <script src="./js/ui/picker.js?v=65"></script>
+    <script src="./js/core/units.js?v=65"></script>
+    <script src="./js/core/plates.js?v=65"></script>
+    <script src="./js/core/setTypes.js?v=65"></script>
+    <script src="./js/core/coach.js?v=65"></script>
+    <script src="./js/core/metrics.js?v=65"></script>
+    <script src="./js/core/recovery.js?v=65"></script>
+    <script src="./js/core/haptics.js?v=65"></script>
+    <script src="./js/core/shell.js?v=65"></script>
+    <script src="./js/core/backup.js?v=65"></script>
+    <script src="./js/core/store.js?v=65"></script>
+    <script src="./js/ui/ui.js?v=65"></script>
+    <script src="./js/views/library.js?v=65"></script>
+    <script src="./js/views/builder.js?v=65"></script>
+    <script src="./js/views/workoutSets.js?v=65"></script>
+    <script src="./js/views/workout.js?v=65"></script>
+    <script src="./js/views/progress.js?v=65"></script>
+    <script src="./js/views/plan.js?v=65"></script>
+    <script src="./js/views/onboarding.js?v=65"></script>
+    <script src="./js/views/you.js?v=65"></script>
+    <script src="./js/views/body.js?v=65"></script>
+    <script src="./js/views/settings.js?v=65"></script>
+    <script src="./js/views/home.js?v=65"></script>
+    <script src="./js/app.js?v=65"></script>
   </body>
 </html>

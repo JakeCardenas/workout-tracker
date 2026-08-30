@@ -33,6 +33,15 @@ const SettingsView = (() => {
     </div>`;
   }
 
+  const toggle = (key, label, hint) => {
+    const on = Store.state.settings[key] !== false;
+    return row(label, hint,
+      `<button class="switch${on ? " is-on" : ""}" type="button" role="switch"
+               aria-checked="${on}" data-setting="${key}" aria-label="${label}">
+        <span class="switch-knob"></span>
+      </button>`);
+  };
+
   function render() {
     const s = Store.state;
     const installed = Shell.standalone();
@@ -66,8 +75,22 @@ const SettingsView = (() => {
           `<div class="seg mono">${themes
             .map((t) => `<button type="button" class="seg-btn${s.settings.theme === t ? " is-on" : ""}" data-theme-btn="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`)
             .join("")}</div>`)}
-        ${row("Sound", "Short cues for sets, rest and records",
+      </section>
+
+      <section class="set-block">
+        <h2 class="section-head"><span>Sound and feel</span></h2>
+        ${row("All sound", "The master switch for every cue",
           `<button class="btn btn--sm" type="button" data-sound-toggle-label>${Sound.isEnabled() ? "On" : "Off"}</button>`)}
+        ${toggle("cues", "Interaction cues", "Taps, sets banked, confirmations")}
+        ${toggle("restSound", "Rest timer", "A tone when rest starts and ends")}
+        ${toggle("countdown", "Final countdown", "The last three seconds of rest")}
+        ${toggle("celebrate", "Records and finishes", "Personal records, workout complete, the intro")}
+        ${toggle("haptics", "Haptics", Haptics.can() ? "Subtle vibration on key moments" : "Not supported on this device")}
+      </section>
+
+      <section class="set-block">
+        <h2 class="section-head"><span>Training</span></h2>
+        ${toggle("autoRest", "Automatic rest timer", "Starts the clock the moment a set is banked")}
       </section>
 
       <section class="set-block">
@@ -142,6 +165,20 @@ const SettingsView = (() => {
         Store.setSetting("unit", next);
         App.syncShell();
         return App.repaint();
+      }
+
+      const sw = e.target.closest("[data-setting]");
+      if (sw) {
+        const key = sw.dataset.setting;
+        const next = Store.state.settings[key] === false;
+        Store.setSetting(key, next);
+        sw.classList.toggle("is-on", next);
+        sw.setAttribute("aria-checked", String(next));
+        if (next) {
+          Sound.play(key === "haptics" ? "tap" : key === "restSound" ? "rest" : "tap");
+          if (key === "haptics") Haptics.fire("set");
+        }
+        return;
       }
 
       if (e.target.closest("[data-sound-toggle-label]")) {

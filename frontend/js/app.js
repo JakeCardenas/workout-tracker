@@ -9,6 +9,7 @@ const App = (() => {
     "/settings": { view: SettingsView, nav: "settings" },
     "/history": { view: HistoryView, nav: "history" },
     "/progress": { view: ProgressView, nav: "progress" },
+    "/body": { view: BodyView, nav: "body" },
   };
 
   let currentPath = "/";
