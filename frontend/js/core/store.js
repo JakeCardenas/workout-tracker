@@ -444,6 +444,17 @@ const Store = (() => {
     commit("draft");
   }
 
+  function duplicateItem(itemUid) {
+    const items = state.draft.items;
+    const at = items.findIndex((i) => i.uid === itemUid);
+    if (at < 0) return null;
+    const copy = Object.assign({}, items[at], { uid: uid() });
+    if (items[at].plan) copy.plan = items[at].plan.map((p) => Object.assign({}, p));
+    items.splice(at + 1, 0, copy);
+    commit("draft");
+    return copy;
+  }
+
   function setItemNote(itemUid, note) {
     const item = state.draft.items.find((i) => i.uid === itemUid);
     if (!item) return;
@@ -501,6 +512,7 @@ const Store = (() => {
     moveDraftItem,
     setDraftName,
     setsOf,
+    duplicateItem,
     setItemNote,
     noteFor,
     logBody,

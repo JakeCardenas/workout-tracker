@@ -1,4 +1,11 @@
 const HistoryView = (() => {
+  const RANGES = {
+    week: { label: "Week", days: 7 },
+    month: { label: "Month", days: 31 },
+    all: { label: "All", days: null },
+  };
+  let range = "all";
+
   function sessionCard(s) {
     return `
       <article class="hist-card" data-session="${s.id}" tabindex="0" role="button">
@@ -7,7 +14,10 @@ const HistoryView = (() => {
             <p class="hist-date mono">${Fmt.date(s.endedAt)} · ${Fmt.relative(s.endedAt)}</p>
             <h3 class="hist-name">${esc(s.name)}</h3>
           </div>
-          ${s.prs && s.prs.length ? `<span class="pr-badge mono">${Icons.get("flame")} ${s.prs.length} PR</span>` : ""}
+          <div class="hist-tags">
+            ${s.manual ? `<span class="hist-tag mono">logged by hand</span>` : ""}
+            ${s.prs && s.prs.length ? `<span class="pr-badge mono">${Icons.get("flame")} ${s.prs.length} PR</span>` : ""}
+          </div>
         </div>
         <dl class="hist-stats mono">
           <div><dt>Exercises</dt><dd>${s.stats.exercises}</dd></div>
@@ -99,7 +109,10 @@ const HistoryView = (() => {
           <a class="btn btn--primary" href="#/build">${Icons.get("play")} Build a workout</a>
         </div>`;
 
-    const totals = history.reduce(
+    const shown =
+      RANGES[range].days === null ? history : Metrics.since(RANGES[range].days);
+
+    const totals = shown.reduce(
       (t, s) => ({
         sets: t.sets + s.stats.sets,
         volume: t.volume + s.stats.volume,
@@ -109,23 +122,130 @@ const HistoryView = (() => {
     );
 
     return `
-      <div class="view-head"><div>
-        <h1 class="view-title">History</h1>
-        <p class="view-sub">${history.length} workout${history.length > 1 ? "s" : ""} logged.</p>
-      </div></div>
+      <div class="view-head">
+        <div>
+          <h1 class="view-title">History</h1>
+          <p class="view-sub">${history.length} workout${history.length > 1 ? "s" : ""} logged.</p>
+        </div>
+        <button class="btn" type="button" data-log-past>${Icons.get("plus")} Log past workout</button>
+      </div>
+
+      <div class="filter-row">
+        <span class="filter-key mono">Range</span>
+        <div class="seg mono">
+          ${Object.entries(RANGES)
+            .map(
+              ([key, r]) =>
+                `<button type="button" class="seg-btn${range === key ? " is-on" : ""}" data-range="${key}">${r.label}</button>`,
+            )
+            .join("")}
+        </div>
+      </div>
 
       <dl class="summary-strip mono">
-        <div><dt>Workouts</dt><dd>${history.length}</dd></div>
+        <div><dt>Workouts</dt><dd>${shown.length}</dd></div>
         <div><dt>Sets</dt><dd>${totals.sets}</dd></div>
         <div><dt>Volume</dt><dd>${Fmt.volume(totals.volume)}</dd></div>
         <div><dt>Time</dt><dd>${Fmt.duration(totals.minutes * 60000)}</dd></div>
       </dl>
 
-      <div class="hist-list">${history.map(sessionCard).join("")}</div>`;
+      ${shown.length
+        ? `<div class="hist-list">${shown.map(sessionCard).join("")}</div>`
+        : `<p class="chart-empty mono">Nothing in this range.</p>`}`;
+  }
+
+  // a session done away from the phone still belongs in the record
+  function logPast() {
+    const workouts = Store.state.workouts;
+    const today = new Date().toISOString().slice(0, 10);
+
+    Sheet.open({
+      title: "Log a past workout",
+      body: `<form class="body-form" data-past-form>
+        <p class="sheet-lede">For sessions you trained without the app. Sets are recorded as a single block, so records stay honest.</p>
+        <label class="field">
+          <span class="field-label mono">Name</span>
+          <input class="field-input" type="text" name="name" value="Workout" maxlength="40" required />
+        </label>
+        <div class="body-grid">
+          <label class="field">
+            <span class="field-label mono">Date</span>
+            <input class="field-input" type="date" name="date" value="${today}" max="${today}" required />
+          </label>
+          <label class="field">
+            <span class="field-label mono">Minutes</span>
+            <input class="field-input" type="number" name="minutes" value="60" min="1" max="360" required />
+          </label>
+        </div>
+        ${workouts.length
+          ? `<label class="field">
+              <span class="field-label mono">Copy exercises from</span>
+              <select class="field-input" name="from">
+                <option value="">Nothing — log time only</option>
+                ${workouts.map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join("")}
+              </select>
+            </label>`
+          : ""}
+        <button class="btn btn--primary btn--lg" type="submit">Save to history</button>
+      </form>`,
+      onMount(scope) {
+        scope.querySelector("[data-past-form]").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const data = new FormData(e.target);
+          const endedAt = new Date(`${data.get("date")}T18:00:00`).getTime();
+          const minutes = Math.max(1, +data.get("minutes") || 60);
+          const source = workouts.find((w) => w.id === data.get("from"));
+
+          const exercises = source
+            ? source.items.map((item) => ({
+                exId: item.exId,
+                rest: item.rest,
+                sets: Store.setsOf(item).map((row) => ({ ...row, done: true, at: endedAt })),
+              }))
+            : [];
+
+          const done = exercises.flatMap((x) => x.sets).filter(SetTypes.counts);
+          const stats = {
+            exercises: exercises.length,
+            sets: done.length,
+            working: done.length,
+            reps: done.reduce((t, x) => t + x.reps, 0),
+            volume: done.reduce((t, x) => t + x.reps * x.weight, 0),
+            duration: minutes * 60000,
+          };
+
+          const prs = exercises.length ? Store.applyRecords(exercises, endedAt) : [];
+          Store.logSession({
+            name: (data.get("name") || "Workout").toString().trim(),
+            startedAt: endedAt - stats.duration,
+            endedAt,
+            durationMs: stats.duration,
+            exercises,
+            stats,
+            prs,
+            manual: true,
+          });
+
+          Sheet.close();
+          Sound.play("set");
+          App.repaint();
+          Toast.show("Added to history");
+        });
+      },
+    });
   }
 
   function mount(root) {
     root.addEventListener("click", (e) => {
+      const r = e.target.closest("[data-range]");
+      if (r) {
+        range = r.dataset.range;
+        Sound.play("tap");
+        return App.repaint();
+      }
+
+      if (e.target.closest("[data-log-past]")) return logPast();
+
       const card = e.target.closest("[data-session]");
       if (card) openSession(card.dataset.session);
     });

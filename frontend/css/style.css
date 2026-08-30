@@ -5143,3 +5143,27 @@ body.is-splashing .tabbar {
   color: var(--fg-faint);
   text-align: center;
 }
+
+.build-note {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  font-style: italic;
+}
+
+.hist-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.hist-tag {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}

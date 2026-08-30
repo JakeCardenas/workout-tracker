@@ -171,11 +171,14 @@ const BuildView = (() => {
         <div class="build-main">
           <h3 class="build-name">${esc(ex.name)}</h3>
           <p class="build-sum mono">${describeSets(item, ex)} · ${item.rest}s rest</p>
+          ${item.note ? `<p class="build-note">${esc(item.note)}</p>` : ""}
         </div>
         <div class="build-tools">
           <button class="icon-btn" type="button" data-move="-1" ${index === 0 ? "disabled" : ""} aria-label="Move up">${Icons.get("up")}</button>
           <button class="icon-btn" type="button" data-move="1" ${index === total - 1 ? "disabled" : ""} aria-label="Move down">${Icons.get("down")}</button>
-          <button class="icon-btn" type="button" data-edit aria-label="Edit">${Icons.get("edit")}</button>
+          <button class="icon-btn" type="button" data-note aria-label="${item.note ? "Edit note" : "Add note"}">${Icons.get("edit")}</button>
+          <button class="icon-btn" type="button" data-copy-item aria-label="Duplicate exercise">${Icons.get("copy")}</button>
+          <button class="icon-btn" type="button" data-edit aria-label="Configure">${Icons.get("plus")}</button>
           <button class="icon-btn icon-btn--danger" type="button" data-remove aria-label="Remove">${Icons.get("trash")}</button>
         </div>
         <span class="build-grip" aria-hidden="true">${Icons.get("grip")}</span>
@@ -422,6 +425,33 @@ const BuildView = (() => {
         const uid = row.dataset.uid;
         const item = Store.state.draft.items.find((i) => i.uid === uid);
         if (!item) return;
+        if (e.target.closest("[data-copy-item]")) {
+          const copy = Store.duplicateItem(uid);
+          Sound.play("tap");
+          App.repaint();
+          return Toast.show(copy ? "Exercise duplicated" : "Could not duplicate");
+        }
+
+        if (e.target.closest("[data-note]")) {
+          return Sheet.open({
+            title: "Exercise note",
+            body: `<div class="note-edit">
+              <p class="sheet-lede">${esc(EXERCISE_BY_ID[item.exId].name)} — cues or settings you want in front of you mid-set.</p>
+              <textarea class="note-field" rows="4" data-note-field placeholder="Seat at 4, elbows tucked…">${esc(item.note || "")}</textarea>
+              <button class="btn btn--primary btn--lg" type="button" data-save-note>Save note</button>
+            </div>`,
+            onMount(scope) {
+              const field = scope.querySelector("[data-note-field]");
+              field.focus();
+              scope.querySelector("[data-save-note]").addEventListener("click", () => {
+                Store.setItemNote(uid, field.value);
+                Sheet.close();
+                App.repaint();
+              });
+            },
+          });
+        }
+
         const move = e.target.closest("[data-move]");
         if (move) {
           Store.moveDraftItem(uid, +move.dataset.move);
