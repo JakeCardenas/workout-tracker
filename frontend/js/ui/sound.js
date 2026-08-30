@@ -6,6 +6,26 @@ const Sound = (() => {
   let enabled = localStorage.getItem("reps.sound");
   enabled = enabled === null ? true : enabled === "true";
 
+  // which cues belong to which switch in Settings, so one toggle can silence a
+  // whole category without touching the rest
+  const CHANNEL = {
+    rest: "restSound",
+    restReady: "restSound",
+    tick: "countdown",
+    countdown: "countdown",
+    pr: "celebrate",
+    done: "celebrate",
+    launch: "celebrate",
+  };
+
+  function allows(name) {
+    if (!enabled) return false;
+    const s = Store.state.settings;
+    const channel = CHANNEL[name];
+    if (channel) return s[channel] !== false;
+    return s.cues !== false;
+  }
+
   let lastHover = 0;
 
   function ensure() {
@@ -115,6 +135,24 @@ const Sound = (() => {
 
     remove: () => note(392, { gain: 0.032, hold: 0.02, fade: 0.12 }),
 
+    // a workout opening: two low notes settling, nothing triumphant yet
+    begin() {
+      note(196, { gain: 0.04, hold: 0.06, fade: 0.3, type: "triangle" });
+      note(293.66, { gain: 0.03, at: 0.1, hold: 0.06, fade: 0.36 });
+    },
+
+    // an exercise finished: a quiet close, one step below the set cue
+    exercise() {
+      note(523.25, { gain: 0.036, hold: 0.05, fade: 0.2 });
+      note(783.99, { gain: 0.026, at: 0.1, hold: 0.06, fade: 0.3 });
+    },
+
+    // the last three seconds of rest, climbing so the final one lands
+    countdown(step) {
+      const pitch = [659.25, 739.99, 830.61][Math.min(2, 3 - step)] || 659.25;
+      note(pitch, { gain: 0.026 + step * 0.004, hold: 0.02, fade: 0.09 });
+    },
+
     // the opening: a low landing, an open fifth, then one bright tail
     launch() {
       note(146.83, { gain: 0.05, at: 0.1, hold: 0.05, fade: 0.5, type: "triangle" });
@@ -125,10 +163,10 @@ const Sound = (() => {
     },
   };
 
-  function play(name) {
-    if (!enabled || !unlocked) return;
+  function play(name, arg) {
+    if (!allows(name) || !unlocked) return;
     if (!ensure()) return;
-    if (cues[name]) cues[name]();
+    if (cues[name]) cues[name](arg);
   }
 
   function remember(v) {
@@ -144,7 +182,7 @@ const Sound = (() => {
   // starts, and again on the first touch. Whichever attempt the browser allows
   // through is the only one that sounds, and neither fires after the intro ends.
   function launch() {
-    if (!enabled || launched || !ensure()) return false;
+    if (!allows("launch") || launched || !ensure()) return false;
     if (!launchUntil) launchUntil = performance.now() + 4000;
     if (performance.now() > launchUntil) return false;
 

@@ -51,16 +51,19 @@ const Workout = (() => {
       exercises: source.items.map((item) => ({
         exId: item.exId,
         rest: item.rest,
+        note: item.note || "",
         sets: Store.setsOf(item).map((row) => ({
           reps: row.reps,
           weight: row.weight,
+          type: row.type || "normal",
           done: false,
         })),
       })),
     };
     root().classList.add("is-on");
     document.body.classList.add("no-scroll");
-    Sound.play("swell");
+    Sound.play("begin");
+    Haptics.fire("tap");
     remember();
     paint();
   }
@@ -71,39 +74,40 @@ const Workout = (() => {
 
   function current() {
     const exercise = live.exercises[live.exIndex];
-    return { exercise, set: exercise.sets[live.setIndex], meta: EXERCISE_BY_ID[exercise.exId] };
+    const set = exercise.sets[live.setIndex] || exercise.sets[exercise.sets.length - 1];
+    return { exercise, set, meta: EXERCISE_BY_ID[exercise.exId] };
   }
 
   function upNext() {
     const rows = [];
     for (let e = live.exIndex; e < live.exercises.length && rows.length < 3; e++) {
-      const start = e === live.exIndex ? live.setIndex + 1 : 0;
+      const from = e === live.exIndex ? live.setIndex + 1 : 0;
       const ex = live.exercises[e];
-      if (start >= ex.sets.length) continue;
+      const left = ex.sets.length - from;
+      if (left <= 0) continue;
       rows.push({
         name: EXERCISE_BY_ID[ex.exId].name,
-        detail: `${ex.sets.length - start} set${ex.sets.length - start > 1 ? "s" : ""} left`,
+        detail: `${left} set${left > 1 ? "s" : ""} left`,
       });
     }
     return rows;
   }
 
-  // shown only on the first set, where changing the load still makes sense
+  // shown only on the first working set, where changing the load still makes sense
   function suggestionBlock(meta, set) {
-    if (live.setIndex > 0 || set.done) return "";
+    if (set.done || SetTypes.of(set).key === "warmup") return "";
+    const earlier = live.exercises[live.exIndex].sets
+      .slice(0, live.setIndex)
+      .some((s) => s.done && SetTypes.counts(s));
+    if (earlier) return "";
+
     const tip = Coach.suggest(meta.id, { reps: set.reps });
     if (!tip) return "";
-    const same = Math.abs(tip.weight - set.weight) < 0.01 && tip.reps === set.reps;
-    if (same) return "";
-
-    const last = Store.lastSetsFor(meta.id);
-    const top = last.sets.reduce((a, b) => (b.weight > a.weight ? b : a));
+    if (Math.abs(tip.weight - set.weight) < 0.01 && tip.reps === set.reps) return "";
 
     return `
       <div class="suggest" data-suggest>
         <div class="suggest-line">
-          <span class="mono suggest-was">Last · ${Fmt.weight(top.weight, meta.unit)} × ${top.reps}</span>
-          <span class="suggest-arrow">${Icons.get("forward")}</span>
           <span class="mono suggest-now">${Fmt.weight(tip.weight, meta.unit)} × ${tip.reps}</span>
         </div>
         <p class="suggest-why">${esc(tip.why)}</p>
@@ -116,6 +120,7 @@ const Workout = (() => {
     if (live.finished) return paintSummary();
     const { exercise, set, meta } = current();
     const s = stepsFor(meta);
+    const type = SetTypes.of(set);
     const progress = (doneSets() / totalSets()) * 100;
 
     root().innerHTML = `
@@ -133,20 +138,20 @@ const Workout = (() => {
         <main class="session-main">
           <p class="session-step mono">Exercise ${live.exIndex + 1} of ${live.exercises.length}</p>
           <h1 class="session-ex">${esc(meta.name)}</h1>
-          <p class="session-set mono">Set ${live.setIndex + 1} of ${exercise.sets.length}</p>
 
           <div class="session-art">${Art.render(meta.id, "is-playing")}</div>
 
-          ${suggestionBlock(meta, set)}
+          ${WorkoutSets.previousBlock(meta.id, meta.unit)}
 
-          <div class="session-dots" aria-hidden="true">
-            ${exercise.sets
-              .map(
-                (x, i) =>
-                  `<span class="set-dot${x.done ? " is-done" : ""}${i === live.setIndex ? " is-active" : ""}"></span>`,
-              )
-              .join("")}
-          </div>
+          ${WorkoutSets.rail(exercise, live.setIndex)}
+
+          <button class="set-type-btn mono" type="button" data-set-type>
+            ${SetTypes.counts(set)
+              ? `Set ${WorkoutSets.workingNumber(exercise, live.setIndex)} · ${type.name}`
+              : type.name}
+          </button>
+
+          ${suggestionBlock(meta, set)}
 
           <div class="session-config" data-config>
             ${Stepper.markup({ name: "reps", value: set.reps, min: s.repsMin, max: s.repsMax, step: s.repsStep, label: s.repsLabel, wide: true })}
@@ -155,7 +160,19 @@ const Workout = (() => {
 
           ${Plates.usesBar(meta) ? `<div class="session-bar-load" data-bar>${Plates.strip(set.weight)}</div>` : ""}
 
-          <button class="btn btn--primary btn--xl" type="button" data-complete>${Icons.get("check")} Complete Set</button>
+          <button class="btn btn--primary btn--xl" type="button" data-complete>
+            ${Icons.get("check")} ${set.done ? "Set banked" : "Complete Set"}
+          </button>
+
+          <div class="session-tools">
+            <button class="tool-btn mono" type="button" data-notes>${exercise.note ? "Note ✓" : "Note"}</button>
+            <button class="tool-btn mono" type="button" data-warmup>Warm-up</button>
+            <button class="tool-btn mono" type="button" data-replace>Replace</button>
+            <button class="tool-btn mono" type="button" data-skip-exercise>Skip exercise</button>
+          </div>
+
+          ${exercise.note ? `<p class="session-note">${esc(exercise.note)}</p>` : ""}
+
           <button class="link-btn mono" type="button" data-skip-set>Skip this set</button>
 
           ${upNext().length
@@ -174,7 +191,7 @@ const Workout = (() => {
       const value = e.detail.name === "weight" ? Units.toKg(e.detail.value) : e.detail.value;
       active[e.detail.name] = value;
       ex.sets.forEach((x, i) => {
-        if (i > live.setIndex && !x.done) x[e.detail.name] = value;
+        if (i > live.setIndex && !x.done && SetTypes.counts(x)) x[e.detail.name] = value;
       });
       const bar = root().querySelector("[data-bar]");
       if (bar && e.detail.name === "weight") bar.innerHTML = Plates.strip(value);
@@ -183,6 +200,7 @@ const Workout = (() => {
   }
 
   function checkRecord(exId, set) {
+    if (!SetTypes.counts(set)) return null;
     const rec = Store.state.records[exId];
     if (!rec) return null;
     if (set.weight > 0 && set.weight > rec.bestWeight) return { kind: "weight", value: set.weight };
@@ -199,7 +217,7 @@ const Workout = (() => {
       `<div class="pr-flash" role="status"><span class="pr-flash-tag mono">Personal record</span><span class="pr-flash-val">${label}</span></div>`,
     );
     Sound.play("pr");
-    if (navigator.vibrate) navigator.vibrate([12, 40, 18]);
+    Haptics.fire("pr");
     setTimeout(() => {
       const f = root().querySelector(".pr-flash");
       if (f) f.remove();
@@ -213,6 +231,7 @@ const Workout = (() => {
     set.done = true;
     set.at = Date.now();
     Sound.play("set");
+    Haptics.fire("set");
     if (hit) flashRecord(meta, hit);
 
     const card = root().querySelector(".session-main");
@@ -224,34 +243,226 @@ const Workout = (() => {
     // the header sits behind the rest overlay, so nudge it now
     root().querySelector(".session-count").textContent = `${doneSets()} / ${totalSets()} sets`;
     root().querySelector(".session-progress span").style.width = `${(doneSets() / totalSets()) * 100}%`;
-    const dot = root().querySelectorAll(".set-dot")[live.setIndex];
-    if (dot) dot.classList.add("is-done");
     remember();
 
-    const last = live.exIndex === live.exercises.length - 1 && live.setIndex === exercise.sets.length - 1;
-    if (last) return setTimeout(finish, 260);
+    if (!nextUndone()) return setTimeout(finish, 260);
 
-    const rest = exercise.rest;
-    if (rest > 0) setTimeout(() => startRest(rest), 240);
-    else setTimeout(() => { advance(); paint(); }, 240);
-  }
+    const lastOfExercise = live.setIndex === exercise.sets.length - 1;
+    if (lastOfExercise && live.exIndex < live.exercises.length - 1) {
+      Sound.play("exercise");
+    }
 
-  function advance() {
-    const exercise = live.exercises[live.exIndex];
-    if (live.setIndex < exercise.sets.length - 1) live.setIndex++;
-    else {
-      live.exIndex++;
-      live.setIndex = 0;
+    const rest = SetTypes.restsAfter(set) ? exercise.rest : 0;
+    if (rest > 0 && Store.state.settings.autoRest !== false) {
+      setTimeout(() => startRest(rest), 240);
+    } else {
+      setTimeout(() => {
+        advance();
+        paint();
+      }, 240);
     }
   }
 
+  function nextUndone() {
+    for (let e = live.exIndex; e < live.exercises.length; e++) {
+      const from = e === live.exIndex ? live.setIndex : 0;
+      for (let i = from; i < live.exercises[e].sets.length; i++) {
+        if (!live.exercises[e].sets[i].done) return { e, i };
+      }
+    }
+    return null;
+  }
+
+  function advance() {
+    const spot = nextUndone();
+    if (!spot) return;
+    live.exIndex = spot.e;
+    live.setIndex = spot.i;
+  }
+
+  function addSet() {
+    const { exercise, set } = current();
+    const copy = {
+      reps: set.reps,
+      weight: set.weight,
+      type: SetTypes.counts(set) ? set.type || "normal" : "normal",
+      done: false,
+    };
+    exercise.sets.push(copy);
+    live.setIndex = exercise.sets.length - 1;
+    Sound.play("tap");
+    remember();
+    paint();
+  }
+
+  function removeSet(index) {
+    const { exercise } = current();
+    if (exercise.sets.length <= 1) return Toast.show("An exercise needs at least one set");
+    exercise.sets.splice(index, 1);
+    if (live.setIndex >= exercise.sets.length) live.setIndex = exercise.sets.length - 1;
+    Sound.play("remove");
+    remember();
+    paint();
+    Toast.show("Set removed");
+  }
+
+  function usePrevious() {
+    const { exercise, meta } = current();
+    const last = Store.lastSetsFor(meta.id);
+    if (!last) return Toast.show("No earlier session to copy");
+
+    const working = last.sets.filter(SetTypes.counts);
+    if (!working.length) return Toast.show("Nothing worth copying from last time");
+
+    const kept = exercise.sets.filter((s) => s.done);
+    exercise.sets = kept.concat(
+      working.map((s) => ({ reps: s.reps, weight: s.weight, type: "normal", done: false })),
+    );
+    live.setIndex = kept.length;
+    Sound.play("tap");
+    remember();
+    paint();
+    Toast.show(`Copied ${working.length} sets from last time`);
+  }
+
+  function applyWarmup(plan) {
+    const { exercise } = current();
+    const done = exercise.sets.filter((s) => s.done);
+    const pending = exercise.sets.filter((s) => !s.done);
+    exercise.sets = done.concat(plan, pending);
+    live.setIndex = done.length;
+    Sound.play("tap");
+    remember();
+    paint();
+    Toast.show("Warm-up added");
+  }
+
+  function editNote() {
+    const { exercise, meta } = current();
+    Sheet.open({
+      title: "Exercise note",
+      body: `<div class="note-edit">
+        <p class="sheet-lede">${esc(meta.name)} — cues, settings, anything worth remembering next time.</p>
+        <textarea class="note-field" rows="4" data-note-field
+                  placeholder="Seat at 4, elbows tucked…">${esc(exercise.note || "")}</textarea>
+        <button class="btn btn--primary btn--lg" type="button" data-save-note>Save note</button>
+      </div>`,
+      onMount(scope) {
+        const field = scope.querySelector("[data-note-field]");
+        field.focus();
+        scope.querySelector("[data-save-note]").addEventListener("click", () => {
+          exercise.note = field.value.trim();
+          Sheet.close();
+          remember();
+          paint();
+        });
+      },
+    });
+  }
+
+  function replaceExercise() {
+    const { exercise, meta } = current();
+    const taken = live.exercises.map((e) => e.exId);
+    const options = alternatives(meta, taken);
+    if (!options.length) return Toast.show("No close alternative available");
+
+    Sheet.open({
+      title: "Replace exercise",
+      body: `<div class="swap-list">
+        <p class="sheet-lede">Same muscles, different tool. Your finished sets stay on ${esc(meta.name)}.</p>
+        ${options
+          .map(
+            (alt) => `<button class="swap-option" type="button" data-swap="${alt.id}">
+              <span class="swap-art">${Art.render(alt.id)}</span>
+              <span class="swap-copy">
+                <strong>${esc(alt.name)}</strong>
+                <span class="mono">${alt.equipment} · ${alt.primary.map((m) => MUSCLES[m]).join(", ")}</span>
+              </span>
+            </button>`,
+          )
+          .join("")}
+      </div>`,
+      onMount(scope) {
+        Art.scan(scope);
+        scope.querySelectorAll("[data-swap]").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            Sheet.close();
+            swapTo(btn.dataset.swap);
+          }),
+        );
+      },
+    });
+  }
+
+  // closest first: shares the most primary muscles, then the same movement group
+  function alternatives(meta, taken) {
+    return EXERCISES.filter((ex) => ex.id !== meta.id && !taken.includes(ex.id))
+      .map((ex) => {
+        const shared = ex.primary.filter((m) => meta.primary.includes(m)).length;
+        const group = ex.group === meta.group ? 1 : 0;
+        return { ex, score: shared * 3 + group };
+      })
+      .filter((row) => row.score >= 3)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6)
+      .map((row) => row.ex);
+  }
+
+  function swapTo(exId) {
+    const { exercise } = current();
+    const done = exercise.sets.filter((s) => s.done);
+
+    if (done.length) {
+      // finished work belongs to the lift it was done on, so it stays behind
+      live.exercises.splice(live.exIndex, 1, { ...exercise, sets: done }, {
+        exId,
+        rest: exercise.rest,
+        note: "",
+        sets: exercise.sets
+          .filter((s) => !s.done)
+          .map((s) => ({ reps: s.reps, weight: s.weight, type: s.type || "normal", done: false })),
+      });
+      live.exIndex++;
+      live.setIndex = 0;
+    } else {
+      exercise.exId = exId;
+      exercise.note = "";
+      live.setIndex = 0;
+    }
+
+    Sound.play("tap");
+    remember();
+    paint();
+    Toast.show(`Swapped to ${EXERCISE_BY_ID[exId].name}`);
+  }
+
+  function skipExercise() {
+    const exercise = live.exercises[live.exIndex];
+    exercise.sets.forEach((s) => {
+      if (!s.done) s.skipped = true;
+    });
+    exercise.sets = exercise.sets.filter((s) => s.done);
+
+    if (!exercise.sets.length) live.exercises.splice(live.exIndex, 1);
+    else live.exIndex++;
+
+    if (live.exIndex >= live.exercises.length || !nextUndone()) return finish();
+    live.setIndex = 0;
+    advance();
+    remember();
+    paint();
+    Toast.show("Exercise skipped");
+  }
+
   function startRest(seconds) {
-    live.rest = { total: seconds, endsAt: Date.now() + seconds * 1000, warned: new Set() };
-    const next = live.exercises[live.exIndex].sets[live.setIndex + 1]
-      ? EXERCISE_BY_ID[live.exercises[live.exIndex].exId].name
-      : live.exercises[live.exIndex + 1]
-        ? EXERCISE_BY_ID[live.exercises[live.exIndex + 1].exId].name
-        : "";
+    live.rest = {
+      total: seconds,
+      endsAt: Date.now() + seconds * 1000,
+      warned: new Set(),
+      pausedAt: null,
+    };
+    const spot = nextUndone();
+    const next = spot ? EXERCISE_BY_ID[live.exercises[spot.e].exId].name : "";
 
     root().insertAdjacentHTML(
       "beforeend",
@@ -268,8 +479,10 @@ const Workout = (() => {
         <p class="rest-next">Next up · <strong>${esc(next)}</strong></p>
         <div class="rest-actions">
           <button class="btn" type="button" data-add-rest>+30s</button>
-          <button class="btn btn--primary" type="button" data-skip-rest>${Icons.get("skip")} Skip rest</button>
+          <button class="btn" type="button" data-pause-rest>Pause</button>
+          <button class="btn btn--primary" type="button" data-skip-rest>${Icons.get("skip")} Skip</button>
         </div>
+        <button class="link-btn mono" type="button" data-custom-rest>Change rest for this exercise</button>
       </div>`,
     );
     tick();
@@ -279,6 +492,7 @@ const Workout = (() => {
     cancelAnimationFrame(raf);
     const layer = root().querySelector("[data-rest-layer]");
     if (!layer || !live.rest) return;
+    if (live.rest.pausedAt) return;
 
     const remaining = (live.rest.endsAt - Date.now()) / 1000;
     const clock = layer.querySelector("[data-clock]");
@@ -290,17 +504,58 @@ const Workout = (() => {
     if (whole <= 3 && whole > 0 && !live.rest.warned.has(whole)) {
       live.rest.warned.add(whole);
       layer.classList.add("is-final");
-      Sound.play("tick");
+      Sound.play("countdown", whole);
+      Haptics.fire("tick");
     }
 
     if (remaining <= 0) return endRest(true);
     raf = requestAnimationFrame(tick);
   }
 
+  function togglePause() {
+    if (!live.rest) return;
+    const layer = root().querySelector("[data-rest-layer]");
+    const btn = layer && layer.querySelector("[data-pause-rest]");
+
+    if (live.rest.pausedAt) {
+      live.rest.endsAt += Date.now() - live.rest.pausedAt;
+      live.rest.pausedAt = null;
+      if (layer) layer.classList.remove("is-paused");
+      if (btn) btn.textContent = "Pause";
+      tick();
+    } else {
+      live.rest.pausedAt = Date.now();
+      cancelAnimationFrame(raf);
+      if (layer) layer.classList.add("is-paused");
+      if (btn) btn.textContent = "Resume";
+    }
+    Sound.play("tap");
+  }
+
+  function customRest() {
+    const exercise = live.exercises[live.exIndex];
+    RestPicker.open(exercise.rest, (seconds) => {
+      exercise.rest = seconds;
+      if (live.rest) {
+        live.rest.total = seconds;
+        live.rest.endsAt = Date.now() + seconds * 1000;
+        live.rest.warned.clear();
+        const layer = root().querySelector("[data-rest-layer]");
+        if (layer) layer.classList.remove("is-final");
+        tick();
+      }
+      remember();
+      Toast.show(`Rest set to ${Fmt.clock(seconds)}`);
+    });
+  }
+
   function endRest(rang) {
     if (!live.rest) return;
     cancelAnimationFrame(raf);
-    if (rang) Sound.play("rest");
+    if (rang) {
+      Sound.play("rest");
+      Haptics.fire("rest");
+    }
     live.rest = null;
     const layer = root().querySelector("[data-rest-layer]");
     if (layer) {
@@ -326,14 +581,17 @@ const Workout = (() => {
     }
     const prs = Store.applyRecords(trained, live.endedAt);
     const done = trained.flatMap((e) => e.sets.filter((s) => s.done));
+    const working = done.filter(SetTypes.counts);
 
     live.summary = {
       exercises: trained.length,
       sets: done.length,
-      reps: done.reduce((t, s) => t + s.reps, 0),
-      volume: done.reduce((t, s) => t + s.reps * s.weight, 0),
+      working: working.length,
+      reps: working.reduce((t, s) => t + s.reps, 0),
+      volume: working.reduce((t, s) => t + s.reps * s.weight, 0),
       duration: live.endedAt - live.startedAt,
       prs,
+      gains: improvements(trained),
     };
 
     Store.logSession({
@@ -348,8 +606,33 @@ const Workout = (() => {
 
     forget();
     Sound.play("done");
+    Haptics.fire("done");
     if (prs.length) setTimeout(() => Sound.play("pr"), 700);
     paintSummary();
+  }
+
+  // volume beaten on a lift you have done before is worth saying out loud, even
+  // when no single set was a record
+  function improvements(trained) {
+    const out = [];
+    trained.forEach((entry) => {
+      const now = Metrics.volumeOf(entry.sets.filter(SetTypes.counts));
+      if (!now) return;
+      const past = Store.state.history.find((s) =>
+        s.exercises.some((e) => e.exId === entry.exId),
+      );
+      if (!past) return;
+      const before = Metrics.volumeOf(
+        past.exercises.find((e) => e.exId === entry.exId).sets.filter(SetTypes.counts),
+      );
+      if (before && now > before * 1.02) {
+        out.push({
+          exId: entry.exId,
+          pct: Math.round(((now - before) / before) * 100),
+        });
+      }
+    });
+    return out.sort((a, b) => b.pct - a.pct).slice(0, 3);
   }
 
   function prLabel(p) {
@@ -368,14 +651,14 @@ const Workout = (() => {
       <div class="session-shell done">
         <main class="done-main">
           <p class="done-kicker mono">${esc(live.name)} · ${Fmt.date(live.endedAt)}</p>
-          <h1 class="done-title">Workout Complete <span class="done-emoji">🎉</span></h1>
+          <h1 class="done-title">Workout complete</h1>
 
           <dl class="done-stats">
-            ${stat("Exercises", s.exercises)}
-            ${stat("Sets", s.sets)}
-            ${stat("Total reps", s.reps)}
-            ${stat(`Volume ${Units.label()}`, Math.round(Units.fromKg(s.volume)))}
             ${stat("Minutes", Math.max(1, Math.round(s.duration / 60000)))}
+            ${stat(`Volume ${Units.label()}`, Math.round(Units.fromKg(s.volume)))}
+            ${stat("Working sets", s.working)}
+            ${stat("Exercises", s.exercises)}
+            ${stat("Total reps", s.reps)}
           </dl>
 
           ${s.prs.length
@@ -393,7 +676,24 @@ const Workout = (() => {
                     .join("")}
                 </ul>
               </section>`
-            : `<p class="done-note">No records this time — consistency still counts.</p>`}
+            : ""}
+
+          ${s.gains.length
+            ? `<section class="gain-block">
+                <h2 class="section-label mono">More than last time</h2>
+                <ul class="gain-list">
+                  ${s.gains
+                    .map(
+                      (g) => `<li><span>${esc(EXERCISE_BY_ID[g.exId].name)}</span><span class="mono">+${g.pct}% volume</span></li>`,
+                    )
+                    .join("")}
+                </ul>
+              </section>`
+            : ""}
+
+          ${!s.prs.length && !s.gains.length
+            ? `<p class="done-note">No records this time — consistency still counts.</p>`
+            : ""}
 
           <div class="done-actions">
             <button class="btn btn--primary btn--lg" type="button" data-close-session>Done</button>
@@ -449,13 +749,14 @@ const Workout = (() => {
 
   document.addEventListener("click", (e) => {
     if (!live) return;
+
     const use = e.target.closest("[data-use-suggestion]");
     if (use) {
-      const { exercise, set } = current();
+      const { exercise } = current();
       const w = +use.dataset.w;
       const r = +use.dataset.r;
       exercise.sets.forEach((x, i) => {
-        if (i >= live.setIndex && !x.done) {
+        if (i >= live.setIndex && !x.done && SetTypes.counts(x)) {
           x.weight = w;
           x.reps = r;
         }
@@ -466,19 +767,52 @@ const Workout = (() => {
       return Toast.show("Applied to the remaining sets");
     }
 
+    const jump = e.target.closest("[data-jump-set]");
+    if (jump) {
+      live.setIndex = +jump.dataset.jumpSet;
+      Sound.play("tap");
+      return paint();
+    }
+
+    if (e.target.closest("[data-add-set]")) return addSet();
+    if (e.target.closest("[data-use-previous]")) return usePrevious();
+    if (e.target.closest("[data-notes]")) return editNote();
+    if (e.target.closest("[data-replace]")) return replaceExercise();
+    if (e.target.closest("[data-skip-exercise]")) return skipExercise();
+    if (e.target.closest("[data-custom-rest]")) return customRest();
+    if (e.target.closest("[data-pause-rest]")) return togglePause();
+
+    if (e.target.closest("[data-warmup]")) {
+      const { exercise, meta } = current();
+      return WorkoutSets.offerWarmup(exercise, meta, applyWarmup);
+    }
+
+    if (e.target.closest("[data-set-type]")) {
+      return WorkoutSets.typeSheet((type) => {
+        const { set } = current();
+        set.type = type;
+        remember();
+        paint();
+      });
+    }
+
     if (e.target.closest("[data-complete]")) return completeSet();
+
     if (e.target.closest("[data-skip-set]")) {
-      if (live.exIndex === live.exercises.length - 1 && live.setIndex === live.exercises[live.exIndex].sets.length - 1)
-        return finish();
+      const { exercise } = current();
+      if (exercise.sets.length > 1) return removeSet(live.setIndex);
+      if (!nextUndone()) return finish();
       advance();
       return paint();
     }
+
     if (e.target.closest("[data-skip-rest]")) return endRest(false);
     if (e.target.closest("[data-add-rest]")) {
       live.rest.endsAt += 30000;
       live.rest.total += 30;
       live.rest.warned.clear();
       root().querySelector("[data-rest-layer]").classList.remove("is-final");
+      Sound.play("tap");
       return;
     }
     if (e.target.closest("[data-exit]")) return exit(false);

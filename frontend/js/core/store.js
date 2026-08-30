@@ -13,7 +13,18 @@ const Store = (() => {
     profile: null,
     records: {},
     recent: [],
-    settings: { theme: "system", sound: true, unit: "kg" },
+    body: [],
+    settings: {
+      theme: "system",
+      unit: "kg",
+      sound: true,
+      cues: true,
+      restSound: true,
+      countdown: true,
+      celebrate: true,
+      haptics: true,
+      autoRest: true,
+    },
   });
 
   let state = load();
@@ -212,7 +223,7 @@ const Store = (() => {
   function applyRecords(exercises, at) {
     const won = [];
     exercises.forEach((ex) => {
-      const done = ex.sets.filter((s) => s.done);
+      const done = ex.sets.filter((s) => s.done && SetTypes.counts(s));
       if (!done.length) return;
       const firstEver = !state.records[ex.exId];
       const rec = state.records[ex.exId] || {
@@ -413,6 +424,7 @@ const Store = (() => {
       rows.push({
         reps: custom ? custom.reps : item.reps,
         weight: custom ? custom.weight : item.weight,
+        type: custom && custom.type ? custom.type : "normal",
       });
     }
     return rows;
@@ -422,11 +434,51 @@ const Store = (() => {
     const item = state.draft.items.find((i) => i.uid === itemUid);
     if (!item) return;
     item.sets = rows.length;
-    item.plan = rows.map((r) => ({ reps: r.reps, weight: r.weight }));
-    // keep the headline numbers meaningful: the first set is the reference
-    item.reps = rows[0] ? rows[0].reps : item.reps;
-    item.weight = rows[0] ? rows[0].weight : item.weight;
+    item.plan = rows.map((r) => ({ reps: r.reps, weight: r.weight, type: r.type || "normal" }));
+    // the headline numbers describe the work, so warm-ups do not set them
+    const working = rows.find((r) => (r.type || "normal") !== "warmup") || rows[0];
+    if (working) {
+      item.reps = working.reps;
+      item.weight = working.weight;
+    }
     commit("draft");
+  }
+
+  function setItemNote(itemUid, note) {
+    const item = state.draft.items.find((i) => i.uid === itemUid);
+    if (!item) return;
+    item.note = note.trim();
+    if (!item.note) delete item.note;
+    commit("draft");
+  }
+
+  function noteFor(exId) {
+    for (const session of state.history) {
+      const found = session.exercises.find((e) => e.exId === exId && e.note);
+      if (found) return found.note;
+    }
+    return "";
+  }
+
+  function logBody(entry) {
+    const row = Object.assign({ id: uid(), at: Date.now() }, entry);
+    state.body = [row, ...state.body].sort((a, b) => b.at - a.at);
+    commit("body");
+    return row;
+  }
+
+  function deleteBody(id) {
+    state.body = state.body.filter((b) => b.id !== id);
+    commit("body");
+  }
+
+  const latestBody = () => state.body[0] || null;
+
+  function bodySeries(field) {
+    return state.body
+      .filter((b) => typeof b[field] === "number")
+      .map((b) => ({ at: b.at, value: b[field] }))
+      .sort((a, b) => a.at - b.at);
   }
 
   return {
@@ -449,6 +501,12 @@ const Store = (() => {
     moveDraftItem,
     setDraftName,
     setsOf,
+    setItemNote,
+    noteFor,
+    logBody,
+    deleteBody,
+    latestBody,
+    bodySeries,
     writeSets,
     clearDraft,
     saveDraft,
